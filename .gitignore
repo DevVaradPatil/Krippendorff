@@ -1,0 +1,24 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+.env
+.cache/                 # LLM response cache
+*.sqlite
+*.sqlite-*
+
+# Generated: regenerate with `python -m data.mutations.generate`
+data/synthetic/*.jsonl
+# Third-party corpora are downloaded, not vendored
+data/real/menagerie/
+data/real/codeworkout/
+data/real/falconcode/
+
+# Real student work never enters the repo, anonymised or not
+data/course/
+
+results/*.jsonl
+results/figures/*.png

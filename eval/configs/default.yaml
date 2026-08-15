@@ -1,0 +1,44 @@
+# Default eval configuration. Model names live here and nowhere else -- the
+# cross-model cost/accuracy/consistency frontier is a deliverable, so swapping
+# a model must never require a code change.
+
+dataset: data/synthetic
+systems: [test_only, static_only, zero_shot_llm, full_agent]
+
+n_runs: 5           # C1: reruns per submission; 1 for a quick smoke run
+seed: 0
+cache: true         # keyed on (prompt, model, params, run_index)
+
+models:
+  primary:
+    name: gemini-2.0-flash
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+    api_key_env: GEMINI_API_KEY
+    temperature: 0.0
+  batch:
+    name: llama-3.3-70b-versatile
+    base_url: https://api.groq.com/openai/v1
+    api_key_env: GROQ_API_KEY
+    temperature: 0.0
+  local:
+    name: qwen2.5-coder:7b
+    base_url: http://localhost:11434/v1
+    api_key_env: OLLAMA_API_KEY
+    temperature: 0.0
+
+routing:
+  n_samples: 3
+  min_agreement: 0.67
+  min_confidence: 0.6
+  band_margin: 0.05
+
+sandbox:
+  image: python:3.12-slim
+  timeout_s: 5
+  memory_mb: 256
+  cpus: 1.0
+
+adversarial:
+  defenses: [strip_comments, delimiter_isolation, structural, route_flagged]
+
+output: results/

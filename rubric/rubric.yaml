@@ -1,0 +1,47 @@
+# Grading rubric. Code reads weights and band edges from here; nothing
+# hardcodes them. `source` records which pipeline stage may set each criterion
+# and is enforced in agent/aggregate.py -- the LLM cannot supply `correctness`
+# or `style`, which is what keeps injections out of the largest component.
+
+version: 0.1.0
+
+criteria:
+  correctness:
+    weight: 0.60
+    source: S1            # sandboxed test results only
+    description: Fraction of the test suite passed, weighted by test kind.
+    test_kind_weights:
+      normal: 1.0
+      edge: 1.0
+      boundary: 1.0
+      degenerate: 0.5
+
+  style:
+    weight: 0.15
+    source: S2            # ruff + radon only
+    description: Naming, structure, complexity, dead code.
+    thresholds:
+      cyclomatic_complexity_max: 10
+      ruff_violations_per_100_loc_max: 5
+
+  documentation:
+    weight: 0.10
+    source: S2+S4         # coverage measured, quality judged
+    description: Docstrings and comments that explain intent, not syntax.
+
+  design:
+    weight: 0.15
+    source: S4            # the only genuinely subjective criterion
+    description: Decomposition, appropriateness of approach, absence of
+      redundant work. A correct-but-unconventional approach is not penalised.
+
+# Bands are on the weighted total in [0, 1]. Band distance is the unit for the
+# C1 consistency claim, so this ladder must stay stable across runs -- changing
+# it invalidates comparison with earlier results and with the 1.79-band human
+# baseline.
+bands:
+  - {name: A, min: 0.85}
+  - {name: B, min: 0.70}
+  - {name: C, min: 0.55}
+  - {name: D, min: 0.40}
+  - {name: E, min: 0.00}
