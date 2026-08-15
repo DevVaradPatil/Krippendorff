@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project is
 
-A rubric-grounded grading agent for intro-Python assignments, built as an **evaluation project first and an agent second**. The full specification lives in [GRADING_AGENT_PROJECT.md](GRADING_AGENT_PROJECT.md) — read it before making design decisions; it contains the research framing, the six-week plan, and the reasoning behind the architecture.
+**Krippendorff** — a rubric-grounded grading agent for intro-Python assignments, built as an **evaluation project first and an agent second**. Named for Krippendorff's α, the inter-rater reliability statistic the project's central claim is measured with. Repo: https://github.com/DevVaradPatil/Krippendorff
+
+The full specification lives in [GRADING_AGENT_PROJECT.md](GRADING_AGENT_PROJECT.md) — read it before making design decisions; it contains the research framing, the six-week plan, and the reasoning behind the architecture.
 
 The project's claim is *measured consistency and calibrated deferral against a known human-inconsistency baseline* (Krippendorff's α = 0.22, 1.79-band self-disagreement), not "agreement with human grades." Any change that improves human agreement while worsening self-consistency or `OK`/`ALT` false-positive rate is a regression.
 
@@ -35,9 +37,13 @@ Entry points are declared in [pyproject.toml](pyproject.toml) and do not work ye
 ## Environment on this machine
 
 - Python 3.12.3 at `C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe` (spec says 3.11+; 3.12 is fine).
-- **Docker is not installed.** S1 sandboxed execution cannot run here yet. Do not fall back to in-process `exec()` or `subprocess` on untrusted code to work around this — it is a hard rule (§11 of the spec). Implement against the Docker interface and skip/xfail those tests until Docker Desktop is available.
+- **Docker Desktop 29.7.2**, WSL2 backend, Linux containers. Verified working with the exact sandbox flags S1 needs: `docker run --rm --network none --memory 256m --cpus 1 --pids-limit 64 python:3.12-slim` runs and the image is pulled locally. The `--pids-limit` flag is `pids_limit` in the Python SDK's `containers.run`.
+- Docker Desktop is installed **per-user**, not in `Program Files`: `C:\Users\User\AppData\Local\Programs\DockerDesktop\resources\bin`. That directory is on the machine PATH, but a shell started before the install won't see it — if `docker` is "not recognized", the shell is stale, not the install. The `docker-credential-desktop` helper lives in the same directory, so a partial PATH breaks image *pulls* while `docker info` still works.
+- The `docker` CLI is **not** available inside WSL Ubuntu (Docker Desktop's WSL integration for that distro is off). This doesn't matter — the Python SDK talks to the Windows daemon over the named pipe. Don't add a WSL execution path.
 - No Ollama installed. Model calls will hit hosted free tiers; keep the cache on so reruns are free.
-- Not a git repository yet.
+- Git repo on `main`, remote `origin` → https://github.com/DevVaradPatil/Krippendorff.git. The local directory is still named `grading_agent`; that's cosmetic.
+
+Untrusted code still never runs in-process or on the host, Docker present or not — no `exec()`, no bare `subprocess`. That rule doesn't relax now that the sandbox works (spec §11).
 
 ## Architecture invariants
 

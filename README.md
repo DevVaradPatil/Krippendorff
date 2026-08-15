@@ -1,8 +1,10 @@
-# Rubric-Grounded Grading & Feedback Agent
+# Krippendorff
 
-A code-grading agent for intro-Python assignments, built to answer the question most grading demos skip: **how do you know it's any good, and what's the baseline?**
+A rubric-grounded code-grading agent for intro-Python assignments, built to answer the question most grading demos skip: **how do you know it's any good, and what's the baseline?**
 
-Published research finds human graders agree with each other at Krippendorff's α ≈ 0.22 on correctness, and agree with *themselves* to within 1.79 grade bands. So "agreement with human grades" is not a meaningful headline. This project measures **self-consistency**, **misconception-diagnosis F1**, **calibrated deferral**, and **prompt-injection resistance** instead — each against a stated baseline.
+Named for Krippendorff's α — the inter-rater reliability statistic that makes this project's central point. Human graders score α ≈ 0.22 against each other on the same rubric; any grading agent evaluated without that number beside it is being graded against a standard nobody has checked.
+
+The same research finds those graders also disagree with *themselves* — by 1.79 grade bands, on submissions they had already marked. So "agreement with human grades" is not a meaningful headline. Krippendorff measures **self-consistency**, **misconception-diagnosis F1**, **calibrated deferral**, and **prompt-injection resistance** instead — each against a stated baseline.
 
 ## Results
 
@@ -35,6 +37,7 @@ That structure is also the strongest injection defense available: an instruction
 ## Getting started
 
 ```bash
+git clone https://github.com/DevVaradPatil/Krippendorff.git && cd Krippendorff
 python -m venv .venv && .venv/Scripts/activate
 pip install -e ".[dev]"
 cp .env.example .env    # add at least one provider key
@@ -45,7 +48,7 @@ python -m data.mutations.generate --out data/synthetic
 python -m eval.harness --config eval/configs/default.yaml
 ```
 
-Sandboxed execution requires Docker.
+Sandboxed execution requires Docker with Linux containers; student code is never executed on the host.
 
 ## Repository
 

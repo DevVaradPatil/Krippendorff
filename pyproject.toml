@@ -3,9 +3,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "grading-agent"
+# Deliberately not plain "krippendorff": that name belongs to the alpha-computing
+# library we depend on (installed as fast-krippendorff, imported as
+# `krippendorff`). Keeping the distribution name distinct avoids a confusing
+# collision in a project whose headline metric comes from that module.
+name = "krippendorff-agent"
 version = "0.1.0"
-description = "Rubric-grounded grading and feedback agent, evaluated for consistency and calibrated deferral"
+description = "Krippendorff - rubric-grounded grading agent, evaluated for consistency and calibrated deferral"
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.7",
@@ -27,8 +31,8 @@ dev = ["pytest>=8.2", "pytest-cov>=5.0"]
 ui = ["streamlit>=1.36"]
 
 [project.scripts]
-grading-eval = "eval.harness:main"
-grading-generate = "data.mutations.generate:main"
+krippendorff-eval = "eval.harness:main"
+krippendorff-generate = "data.mutations.generate:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["agent", "eval", "data"]
