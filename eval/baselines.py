@@ -14,14 +14,19 @@ from __future__ import annotations
 
 import time
 
-from agent import static_analysis
-from agent.aggregate import aggregate, correctness_score, load_rubric
+from pydantic import BaseModel, Field
+
+from agent import pipeline, static_analysis
+from agent.aggregate import aggregate, band_for, correctness_score, load_rubric
+from agent.confidence import RoutingPolicy
+from agent.llm import ModelConfig
 from agent.sandbox import SandboxLimits, run_tests
 from agent.schemas import (
     Diagnosis,
     GradingResult,
     Misconception,
     Route,
+    Score,
     Span,
     StaticFeatures,
     Submission,
@@ -132,12 +137,91 @@ class StaticOnlyBaseline:
 
 
 class ZeroShotLLMBaseline:
-    """Code + rubric in one prompt. No tools, no pipeline, no sampling."""
+    """Code + rubric in one prompt. No tools, no pipeline, no sampling.
+
+    The control for the whole project: it isolates whether the sandbox, static
+    analysis, evidence isolation and N-sampling buy anything over one
+    well-written prompt. It therefore gets the submission *raw* -- comments and
+    all, no test results, no line numbering, no untrusted-input framing -- and
+    is asked for the band directly. That is exactly the naive setup the
+    architecture is arguing against, so weakening it deliberately would rig the
+    comparison.
+    """
 
     name = "zero_shot_llm"
 
+    def __init__(self, config: ModelConfig, use_cache: bool = True):
+        self.config = config
+        self.use_cache = use_cache
+        self._problems = {p.id: p for p in load_all()}
+        self._rubric = load_rubric()
+        self._bands = [b["name"] for b in self._rubric["bands"]]
+
     def grade(self, submission: Submission) -> GradingResult:
-        raise NotImplementedError("week 2: needs agent/llm.py and a provider key")
+        from agent.llm import LLMError, complete_structured
+
+        problem = self._problems[submission.problem_id]
+        # Built outside the f-string: nested same-type quotes need PEP 701,
+        # which is 3.12-only, and this project supports 3.11.
+        bands = ", ".join("{} >= {}".format(b["name"], b["min"]) for b in self._rubric["bands"])
+        prompt = (
+            f"Grade this intro-Python submission against the rubric.\n\n"
+            f"## Problem\n{problem.statement}\n\n"
+            f"## Rubric\ncorrectness 60%, style 15%, documentation 10%, design 15%. "
+            f"Bands: {bands}\n\n"
+            f"## Submission\n```python\n{submission.source}```\n\n"
+            f"Give an overall score in [0, 1], the band, and the single "
+            f"misconception label from: {', '.join(m.value for m in Misconception)}. "
+            f"OK means correct but poorly presented; ALT means correct by a "
+            f"different valid approach."
+        )
+        started = time.monotonic()
+        try:
+            response, completion = complete_structured(
+                prompt,
+                _ZeroShotResponse,
+                self.config,
+                run_index=0,
+                use_cache=self.use_cache,
+            )
+        except LLMError as exc:
+            raise RuntimeError(f"zero-shot baseline could not run: {exc}") from exc
+
+        band = (
+            response.band
+            if response.band in self._bands
+            else band_for(response.total_score, self._rubric)
+        )
+        return GradingResult(
+            submission_id=submission.submission_id,
+            score=Score(
+                correctness=response.total_score,
+                style=response.total_score,
+                design=response.total_score,
+                total=response.total_score,
+                band=band,
+            ),
+            diagnosis=Diagnosis(
+                label=response.label,
+                evidence=[_whole_file(submission.source)],
+                rationale=response.rationale,
+                subjective_scores={"design": response.total_score},
+                confidence=response.confidence,
+            ),
+            route=Route.AUTO,
+            model=self.config.name,
+            tokens=completion.tokens_in + completion.tokens_out,
+            cost_inr=round(completion.cost_inr(self.config), 6),
+            latency_s=round(time.monotonic() - started, 3),
+        )
+
+
+class _ZeroShotResponse(BaseModel):
+    total_score: float = Field(ge=0.0, le=1.0)
+    band: str
+    label: Misconception
+    rationale: str = Field(max_length=600)
+    confidence: float = Field(ge=0.0, le=1.0)
 
 
 class HumanBaseline:
@@ -158,8 +242,31 @@ class FullAgent:
 
     name = "full_agent"
 
+    def __init__(
+        self,
+        config: ModelConfig,
+        policy: RoutingPolicy | None = None,
+        *,
+        include_comments: bool = False,
+        use_cache: bool = True,
+    ):
+        self.config = config
+        self.policy = policy or RoutingPolicy()
+        self.include_comments = include_comments
+        self.use_cache = use_cache
+        self.run_offset = 0  # set by the harness on each repeat; see run()
+        self._problems = {p.id: p for p in load_all()}
+
     def grade(self, submission: Submission) -> GradingResult:
-        raise NotImplementedError("week 3: needs S4 diagnosis")
+        return pipeline.grade(
+            submission,
+            self._problems[submission.problem_id],
+            self.config,
+            policy=self.policy,
+            include_comments=self.include_comments,
+            use_cache=self.use_cache,
+            run_offset=self.run_offset,
+        )
 
 
 BASELINES = {
@@ -168,7 +275,18 @@ BASELINES = {
 }
 
 
-def build(name: str, submissions: list[Submission] | None = None):
+#: Systems that cost money to run, and therefore need a configured model.
+LLM_SYSTEMS = frozenset({ZeroShotLLMBaseline.name, FullAgent.name})
+
+
+def build(
+    name: str,
+    submissions: list[Submission] | None = None,
+    *,
+    model: ModelConfig | None = None,
+    policy: RoutingPolicy | None = None,
+    include_comments: bool = False,
+):
     """Instantiate a baseline, giving the majority-class prior where needed."""
     if name == TestOnlyBaseline.name and submissions:
         from collections import Counter
@@ -180,6 +298,14 @@ def build(name: str, submissions: list[Submission] | None = None):
         )
         fallback = bugs.most_common(1)[0][0] if bugs else Misconception.CMP
         return TestOnlyBaseline(fallback_label=fallback)
+
+    if name in LLM_SYSTEMS:
+        if model is None:
+            raise NotImplementedError(f"{name} needs a model config; none was given")
+        if name == ZeroShotLLMBaseline.name:
+            return ZeroShotLLMBaseline(model)
+        return FullAgent(model, policy, include_comments=include_comments)
+
     return BASELINES[name]()
 
 

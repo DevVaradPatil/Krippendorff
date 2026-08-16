@@ -1,0 +1,43 @@
+﻿dataset: 120 labelled submissions from E:\Projects\Vibes\grading_agent\data\synthetic\submissions.jsonl
+model:   gemini-3.1-flash-lite @ temperature 0.0
+
+  zero_shot_llm run 1/1: 120 submissions in 602.5s
+
+--- zero_shot_llm: per-class diagnosis ---
+label    prec    rec     F1    n
+ACC      0.43   0.38   0.40    8
+ALI      0.00   0.00   0.00    4
+ALT      0.67   0.67   0.67    3
+CMP      0.82   0.31   0.45   29
+CONV     0.00   0.00   0.00    3
+DIV      1.00   0.36   0.53   11
+EDGE     0.37   0.77   0.50   13
+LOOP     0.20   0.33   0.25    3
+MUT      0.27   1.00   0.43    3
+OBO      0.81   1.00   0.90   13
+OK       0.67   0.86   0.75   21
+REC      0.33   0.50   0.40    4
+SCP      0.50   0.25   0.33    4
+TYPE     1.00   1.00   1.00    1
+
+top confusions (truth -> predicted):
+   CMP -> EDGE 12
+   ALI -> MUT  4
+   SCP -> MUT  3
+  EDGE -> OK   3
+   DIV -> ACC  3
+  CONV -> LOOP 3
+   CMP -> REC  3
+   CMP -> OK   3
+
+deferred to human review: 0/120
+
+system                band acc     band dist     score err      macro-F1  FP on OK/ALT       acc@70%           ECE    self-agree
+--------------------------------------------------------------------------------------------------------------------------------
+zero_shot_llm            0.458         0.808         0.147         0.472         0.125         0.500         0.520         1.000
+
+human baseline for reference: self-disagreement 1.79 bands, inter-rater alpha 0.22 (Messer et al. 2025)
+
+model calls: 120 live, 0 cached, 0 schema retries · tokens in/out: 99946/14323
+
+wrote E:\Projects\Vibes\grading_agent\results\summary.json

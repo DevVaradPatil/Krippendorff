@@ -92,6 +92,34 @@ def macro_f1(true: list[Misconception], pred: list[Misconception | None]) -> flo
     return mean(scores) if scores else 0.0
 
 
+def per_class_f1(
+    true: list[Misconception], pred: list[Misconception | None]
+) -> dict[str, dict[str, float]]:
+    """Precision, recall, F1 and support for each label present in `true`.
+
+    The aggregate macro-F1 hides which classes carry it. With a taxonomy this
+    skewed -- CMP is a quarter of the set, TYPE is one item -- the per-class
+    table is what says whether a score reflects broad competence or one easy
+    class, and it is the honest thing to publish beside the headline.
+    """
+    paired = list(zip(true, pred, strict=True))
+    out: dict[str, dict[str, float]] = {}
+    for cls in sorted({t.value for t in true}):
+        predicted_cls = [t for t, p in paired if p and p.value == cls]
+        actual_cls = [t for t, _ in paired if t.value == cls]
+        tp = sum(1 for t in predicted_cls if t.value == cls)
+        precision = tp / len(predicted_cls) if predicted_cls else 0.0
+        recall = tp / len(actual_cls) if actual_cls else 0.0
+        denominator = precision + recall
+        out[cls] = {
+            "precision": precision,
+            "recall": recall,
+            "f1": 2 * precision * recall / denominator if denominator else 0.0,
+            "support": len(actual_cls),
+        }
+    return out
+
+
 def confusion_matrix(
     true: list[Misconception], pred: list[Misconception | None]
 ) -> dict[str, Counter]:

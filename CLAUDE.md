@@ -10,9 +10,9 @@ The full specification lives in [GRADING_AGENT_PROJECT.md](GRADING_AGENT_PROJECT
 
 The project's claim is *measured consistency and calibrated deferral against a known human-inconsistency baseline* (Krippendorff's α = 0.22, 1.79-band self-disagreement), not "agreement with human grades." Any change that improves human agreement while worsening self-consistency or `OK`/`ALT` false-positive rate is a regression.
 
-Status: **week 1 complete.** The deterministic spine works end to end — S0 static gate, S1 Docker sandbox, S2 static analysis, S5 aggregation, the mutation generator, and the eval harness with two baselines measured on 120 labelled submissions. S4/S6/S7 and the LLM client are still stubs raising `NotImplementedError`.
+Status: **weeks 1–3 measured.** S0–S6 run end to end on 120 labelled submissions. Full agent: macro-F1 **0.932**, false-positive rate on correct code **0.000**, self-disagreement **0.00 bands** vs the human 1.79. Zero-shot on the same model and items: 0.472 and 0.125 — the pipeline is the difference. S7 feedback and the C4 adversarial suite are still stubs.
 
-Read [results/REPORT.md](results/REPORT.md) before trusting any number: the headline test-only band accuracy of 1.000 is a **tautology**, because ground truth is rule-derived from the same tests the baseline reads. Band accuracy does not discriminate on synthetic data. Quote macro-F1 (0.100) and the score error split by label (0.003 buggy vs 0.072 on OK/ALT) instead.
+Read [results/REPORT.md](results/REPORT.md) before trusting any number. Two things to carry into any change: the test-only band accuracy of 1.000 is a **tautology** (ground truth is rule-derived from the same tests the baseline reads, so band accuracy does not discriminate on synthetic data), and the agent is shown the reference solution while every mutant is a small edit to it — so diagnosis is partly diff-reading and 0.932 should be expected to fall on real submissions.
 
 ## Commands
 
@@ -30,9 +30,16 @@ ruff check . && ruff format --check .   # lint + format
 ```bash
 python -m data.mutations.generate            # regenerate the labelled set (~2 min cold)
 python -m eval.harness --n-runs 3            # the core loop; --limit N for a quick pass
+python -m eval.harness --preview             # print the exact S4 prompt, no model call
+python -m eval.harness --systems full_agent --model primary --limit 20
 python -m eval.baselines --baseline test_only
 python -m eval.adversarial --defenses on     # C4 suite: not implemented yet
 ```
+
+`--model` selects a key under `models:` in [eval/configs/default.yaml](eval/configs/default.yaml);
+`primary` is Gemini Flash. Model names, prices and rate limits live there and
+nowhere else — the cross-model frontier is a deliverable, so a model swap must
+never require a code change.
 
 Docker Desktop must be running before either of the first two — they execute every
 submission in a container. `agent.sandbox.available()` reports whether the daemon
@@ -51,7 +58,11 @@ numbers meaningless on a warm cache — clear it before quoting timings.
 - The `docker` CLI is **not** available inside WSL Ubuntu (Docker Desktop's WSL integration for that distro is off). This doesn't matter — the Python SDK talks to the Windows daemon over the named pipe. Don't add a WSL execution path.
 - **`docker.from_env()` does not work here.** It assumes `\\.\pipe\docker_engine`, but Docker Desktop's default context (`desktop-linux`) listens on `dockerDesktopLinuxEngine`, so the SDK reports "cannot find the file specified" while the CLI works fine. [agent/sandbox.py](agent/sandbox.py) tries `DOCKER_HOST` and then the known endpoints in order; use `_client()` rather than constructing a client yourself.
 - Docker Desktop **stops when the machine idles**, and the daemon is then unreachable until the app is relaunched. If the sandbox raises `SandboxUnavailableError`, check the app is running before debugging anything else.
-- No Ollama installed. Model calls will hit hosted free tiers; keep the cache on so reruns are free.
+- **Gemini free-tier quota is per-model and differs by generation.** Measured 2026-08-16: the 2.5 models allow **20 requests/day** (unusable for a sweep), the 3.x lite models **500/day at 15/minute**. `gemini-2.0-flash` is gone (404). Use `primary` (`gemini-3.1-flash-lite`) or `flash35` (`gemini-3.5-flash-lite`); each has its own 500, which is what makes the cross-model comparison affordable. `python eval/probe_quota.py` re-checks for one call per provider.
+- `gemini-3.5-flash-lite` **rejects `reasoning_effort: none`** with a 400; it accepts `low`. `gemini-3.1-flash-lite` accepts `none`. Leaving reasoning on spends the `max_tokens` budget on thinking and can return empty content.
+- The `GROQ_API_KEY` and `OPENROUTER_API_KEY` currently in `.env` both return 401.
+- A 429 is not necessarily fatal: `agent/llm.py` distinguishes a per-minute throttle (retry) from a daily cap (stop) on the quota **id**, not the metric name — both report the same `..._free_tier_requests` metric, and confusing them once burned ten minutes of backoff and once aborted a healthy run. `tests/test_quota.py` pins it with the real response bodies.
+- LLM responses are cached under `.cache/llm/` on (prompt, model, params, **run_index**). The run index is what makes N-sample consistency runs reach the API instead of replaying one cached answer — removing it would report perfect self-agreement for free.
 - Git repo on `main`, remote `origin` → https://github.com/DevVaradPatil/Krippendorff.git. The local directory is still named `grading_agent`; that's cosmetic.
 
 Untrusted code still never runs in-process or on the host, Docker present or not — no `exec()`, no bare `subprocess`. That rule doesn't relax now that the sandbox works (spec §11).
@@ -103,7 +114,9 @@ Two filters in [data/mutations/generate.py](data/mutations/generate.py) keep lab
 
 Build the eval before the agent. Week 1's deliverable — a harness producing a test-only baseline number — is **done**; every later claim is measured relative to it. A change to the agent with no eval run attached is not finished work.
 
-Next: S4 diagnosis and the zero-shot LLM baseline, which need a provider key in `.env`. The dataset is 120 submissions against the spec's target of 300; yield is ~10 per problem, so ~8 more problems closes it (use the `add-problem` skill).
+Next: run the LLM systems. `.env` needs `GEMINI_API_KEY` from https://aistudio.google.com/apikey; nothing else blocks a measurement. The dataset is 120 submissions against the spec's target of 300; yield is ~10 per problem, so ~8 more problems closes it (use the `add-problem` skill).
+
+`tests/test_pipeline.py` stubs the model and asserts the split holds in the real wiring: swinging the design sub-score from 1.0 to 0.0 moves the total by exactly 0.15, the design weight, and no more. If that assertion ever fails, the LLM has leaked into a criterion it does not own.
 
 Baselines in [eval/baselines.py](eval/baselines.py) are non-negotiable: test-only, zero-shot LLM, static-analysis-only, human (from Menagerie), full agent. If the full agent loses to test-only, that is a reportable finding, not a bug to hide.
 

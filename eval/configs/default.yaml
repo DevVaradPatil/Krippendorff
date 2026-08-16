@@ -9,28 +9,92 @@ n_runs: 5           # C1: reruns per submission; 1 for a quick smoke run
 seed: 0
 cache: true         # keyed on (prompt, model, params, run_index)
 
+# Prices are USD per million tokens, converted at `inr_per_usd` for the cost
+# column. Verify them before quoting a cost figure -- they drift, and a stale
+# number here becomes a wrong number in the report.
 models:
+  # Free-tier quota on this key is per-model, and the generations differ wildly:
+  # the 2.5 models allow 20 requests/DAY (measured from the 429 body), while the
+  # 3.x lite models allow 500/day at 15/minute. Only the latter can carry a
+  # 120-submission sweep. Re-check with `python eval/probe_quota.py` before
+  # planning capacity; these limits move.
   primary:
-    name: gemini-2.0-flash
+    name: gemini-3.1-flash-lite
     base_url: https://generativelanguage.googleapis.com/v1beta/openai/
     api_key_env: GEMINI_API_KEY
     temperature: 0.0
+    price_per_mtok_in: 0.10
+    price_per_mtok_out: 0.40
+    json_mode: json_object
+    # These models reason before answering unless told not to. Thinking tokens
+    # are billed as output and drawn from max_tokens, so leaving it on can eat
+    # the whole budget and return empty content. The diagnosis is a single-label
+    # choice over evidence already assembled; it does not need it.
+    reasoning_effort: none
+    max_tokens: 1024
+    requests_per_minute: 12
+
+  # Second free model with its own 500/day budget, which is what makes the
+  # cross-model comparison affordable. It rejects `reasoning_effort: none`
+  # outright (400 INVALID_ARGUMENT) but accepts "low" -- verified, not assumed.
+  flash35:
+    name: gemini-3.5-flash-lite
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+    api_key_env: GEMINI_API_KEY
+    temperature: 0.0
+    price_per_mtok_in: 0.10
+    price_per_mtok_out: 0.40
+    json_mode: json_object
+    reasoning_effort: low
+    max_tokens: 1024
+    requests_per_minute: 12
+
+  # Correct and available, but 20 requests/day free: spot checks only, never a
+  # sweep. Kept so the cap stays documented rather than rediscovered.
+  flash25:
+    name: gemini-2.5-flash
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+    api_key_env: GEMINI_API_KEY
+    temperature: 0.0
+    price_per_mtok_in: 0.30
+    price_per_mtok_out: 2.50
+    json_mode: json_object
+    reasoning_effort: none
+    max_tokens: 1024
+    requests_per_minute: 8
   batch:
     name: llama-3.3-70b-versatile
     base_url: https://api.groq.com/openai/v1
     api_key_env: GROQ_API_KEY
     temperature: 0.0
+    price_per_mtok_in: 0.59
+    price_per_mtok_out: 0.79
+    json_mode: json_object
+    requests_per_minute: 25
+  openai:
+    name: gpt-4o-mini
+    api_key_env: OPENAI_API_KEY
+    temperature: 0.0
+    price_per_mtok_in: 0.15
+    price_per_mtok_out: 0.60
+    json_mode: json_schema
   local:
     name: qwen2.5-coder:7b
     base_url: http://localhost:11434/v1
     api_key_env: OLLAMA_API_KEY
     temperature: 0.0
+    json_mode: prompt_only
 
 routing:
   n_samples: 3
   min_agreement: 0.67
   min_confidence: 0.6
-  band_margin: 0.05
+  # 0.05 was too wide to be a tiebreak: with five bands it makes half the score
+  # range "near an edge" and defers ~70% of the set on that rule alone, which
+  # would swamp the disagreement and confidence signals routing is actually for.
+  # 0.02 is roughly the score movement a rounding difference in the style and
+  # documentation heuristics can produce, which is the case worth a human.
+  band_margin: 0.02
 
 sandbox:
   image: python:3.12-slim

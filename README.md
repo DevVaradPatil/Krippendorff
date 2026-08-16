@@ -8,21 +8,25 @@ The same research finds those graders also disagree with *themselves* — by 1.7
 
 ## Results
 
-Week 1: deterministic pipeline and eval harness, on 120 labelled synthetic submissions across 16 problems. No LLM stage yet, so the rows that need one are empty. Full detail and caveats in [results/REPORT.md](results/REPORT.md).
+120 labelled synthetic submissions across 16 problems. Both LLM rows use `gemini-3.1-flash-lite` at temperature 0. Full detail and caveats in [results/REPORT.md](results/REPORT.md).
 
 | System | Band accuracy | Self-agreement (bands) | Misconception macro-F1 | FP rate on correct code | Attack success | ₹/submission |
 |---|---|---|---|---|---|---|
 | Test-only baseline | 1.000 † | 0.00 | 0.100 | 0.000 | — | 0.00 |
 | Static analysis only | 0.475 | 0.00 | 0.021 | 0.000 | — | 0.00 |
-| Zero-shot LLM | — | — | — | — | — | — |
-| Human (literature) | — | 1.79 | — | — | — | — |
-| **Full agent** | — | — | — | — | — | — |
+| Zero-shot LLM | 0.458 | 0.00 | 0.472 | **0.125** | — | 0.010 |
+| Human (literature) | — | **1.79** | — | — | — | — |
+| **Full agent** | **0.892** | **0.00** | **0.932** | **0.000** | — | 0.017 |
 
-**† That 1.000 is a tautology, not a result.** Ground truth is derived by rule from the tests, and the test-only baseline reads the same tests, so it cannot miss — correctness is 60% of the rubric weight. Band accuracy is therefore not a discriminating metric on synthetic data, for any system that runs the tests. The numbers that do discriminate are macro-F1 (0.100: tests say *that* a submission failed, never *which* misconception caused it) and the score error split by label (0.003 on buggy code, 0.072 on correct-but-scruffy code — the first evidence that a tests-only grader systematically misprices good work in bad clothing).
+**The pipeline is worth roughly double the prompt.** Same model, same items, the only difference being the engineering: macro-F1 0.472 → **0.932**, and the false-positive rate on correct submissions 0.125 → **0.000**. A zero-shot grader flagged one in eight working submissions as buggy; the full agent flagged none of 24, identifying all 21 `OK` submissions with precision and recall of 1.00.
 
-A zero false-positive rate is likewise cheap: static-analysis-only scores 0.000 by labelling everything `OK`, at a macro-F1 of 0.021. The two must always be read together.
+**Self-consistency: 0.00 bands across three independent passes, against a 1.79-band human baseline.** Measured at temperature 0, which is the deployment configuration — it says the system is reproducible, not that the model is free of uncertainty.
 
-Negative findings are reported here too. If the full agent does not beat the test-only baseline, that appears in this table.
+**† That 1.000 is a tautology, not a result.** Ground truth is derived by rule from the tests, and the test-only baseline reads the same tests, so it cannot miss — correctness is 60% of the rubric weight. Band accuracy is therefore not a discriminating metric on synthetic data for any system that runs the tests, which is why the full agent's 0.892 is *lower* than a baseline it beats on every metric that discriminates.
+
+A zero false-positive rate is likewise cheap on its own: static-analysis-only scores 0.000 by labelling everything `OK`, at macro-F1 0.021. The two must always be read together.
+
+Negative findings are reported here too. The largest open threat to the headline: the agent is shown the reference solution, and every mutant is a small edit to it, so diagnosis is partly a diff-reading task and macro-F1 should be expected to fall on real submissions.
 
 ## How it works
 

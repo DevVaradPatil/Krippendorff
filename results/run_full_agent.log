@@ -1,0 +1,48 @@
+﻿dataset: 120 labelled submissions from E:\Projects\Vibes\grading_agent\data\synthetic\submissions.jsonl
+model:   gemini-3.1-flash-lite @ temperature 0.0
+
+  full_agent run 1/1: 120 submissions in 600.4s
+
+--- full_agent: per-class diagnosis ---
+label    prec    rec     F1    n
+ACC      1.00   0.75   0.86    8
+ALI      1.00   1.00   1.00    4
+ALT      1.00   1.00   1.00    3
+CMP      1.00   0.86   0.93   29
+CONV     1.00   1.00   1.00    3
+DIV      1.00   0.91   0.95   11
+EDGE     0.93   1.00   0.96   13
+LOOP     0.50   1.00   0.67    3
+MUT      1.00   1.00   1.00    3
+OBO      0.86   0.92   0.89   13
+OK       1.00   1.00   1.00   21
+REC      0.67   1.00   0.80    4
+SCP      1.00   1.00   1.00    4
+TYPE     1.00   1.00   1.00    1
+
+top confusions (truth -> predicted):
+   CMP -> REC  2
+   CMP -> LOOP 2
+   OBO -> EDGE 1
+   DIV -> OBO  1
+   ACC -> OBO  1
+   ACC -> LOOP 1
+
+deferred to human review: 15/120
+    5  score 0.537 sits on a band edge
+    3  score 0.538 sits on a band edge
+    2  score 0.534 sits on a band edge
+    2  score 0.859 sits on a band edge
+    1  score 0.416 sits on a band edge
+    1  score 0.564 sits on a band edge
+    1  score 0.718 sits on a band edge
+
+system                band acc     band dist     score err      macro-F1  FP on OK/ALT       acc@70%           ECE    self-agree
+--------------------------------------------------------------------------------------------------------------------------------
+full_agent               0.892         0.108         0.020         0.932         0.000         0.917         0.107         1.000
+
+human baseline for reference: self-disagreement 1.79 bands, inter-rater alpha 0.22 (Messer et al. 2025)
+
+model calls: 120 live, 0 cached, 0 schema retries · tokens in/out: 184641/13295
+
+wrote E:\Projects\Vibes\grading_agent\results\summary.json

@@ -75,6 +75,9 @@ class Submission(BaseModel):
 class TestResult(BaseModel):
     """One test case executed inside the sandbox (S1)."""
 
+    # Not a pytest class, despite the name pytest looks for.
+    __test__ = False
+
     test_id: str
     passed: bool
     kind: str = "normal"  # normal | edge | boundary | degenerate
