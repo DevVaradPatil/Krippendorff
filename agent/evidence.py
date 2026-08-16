@@ -36,6 +36,7 @@ def strip_comments(source: str) -> tuple[str, list[str], dict[int, int]]:
     raise NotImplementedError
 
 
-def build(*, problem_id: str, source: str, results: list[TestResult],
-          features: StaticFeatures) -> EvidenceBundle:
+def build(
+    *, problem_id: str, source: str, results: list[TestResult], features: StaticFeatures
+) -> EvidenceBundle:
     raise NotImplementedError

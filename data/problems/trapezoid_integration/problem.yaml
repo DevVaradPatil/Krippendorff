@@ -1,0 +1,15 @@
+id: trapezoid_integration
+title: Trapezoidal rule
+tags: [numerical-integration, loops, floats]
+
+statement: |
+  Write a function `trapezoid(f, a, b, n)` that approximates the definite
+  integral of `f` from `a` to `b` using the composite trapezoidal rule with `n`
+  equal subintervals.
+
+  The rule is  h * ( f(a)/2 + f(a+h) + f(a+2h) + ... + f(b-h) + f(b)/2 ),
+  where h = (b - a) / n.
+
+  Raise `ValueError` if `n` is not a positive integer.
+
+misconceptions_applicable: [OBO, CMP, ACC, DIV, EDGE, OK, ALT]

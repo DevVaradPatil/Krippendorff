@@ -1,0 +1,11 @@
+id: binary_search
+title: Binary search
+tags: [searching, loops, boundaries]
+
+statement: |
+  `binary_search(items, target)` returns the index of `target` in the sorted
+  list `items`, or -1 when it is absent.
+
+  Halve the search window on each step rather than scanning linearly.
+
+misconceptions_applicable: [OBO, CMP, ACC, OK, ALT]

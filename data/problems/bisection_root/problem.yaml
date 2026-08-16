@@ -1,0 +1,14 @@
+id: bisection_root
+title: Bisection root finding
+tags: [root-finding, convergence, loops]
+
+statement: |
+  Write a function `bisect(f, lo, hi, tol=1e-10, max_iter=200)` that finds a
+  root of the continuous function `f` on the bracket `[lo, hi]` by repeated
+  bisection.
+
+  Halve the bracket until its width is below `tol`, then return the midpoint.
+  Raise `ValueError` if `f(lo)` and `f(hi)` do not have opposite signs, since
+  the method needs a sign change to guarantee a root in the bracket.
+
+misconceptions_applicable: [CMP, DIV, CONV, EDGE, OK, ALT]

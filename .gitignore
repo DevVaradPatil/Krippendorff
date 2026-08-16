@@ -6,7 +6,10 @@ __pycache__/
 .ruff_cache/
 
 .env
-.cache/                 # LLM response cache
+# Sandbox and LLM response caches. Inline comments are not supported in
+# .gitignore -- a trailing "# ..." becomes part of the pattern and matches
+# nothing, which is how this entry silently failed the first time.
+.cache/
 *.sqlite
 *.sqlite-*
 

@@ -1,0 +1,13 @@
+id: running_stats
+title: Mean and sample variance
+tags: [statistics, accumulators, division]
+
+statement: |
+  Write `mean(values)` returning the arithmetic mean of a sequence of numbers,
+  and `variance(values)` returning the *sample* variance, i.e. the sum of
+  squared deviations divided by (n - 1).
+
+  `mean` raises `ValueError` on an empty sequence; `variance` raises
+  `ValueError` when given fewer than two values.
+
+misconceptions_applicable: [ACC, DIV, OBO, CMP, EDGE, SCP, OK, ALT]

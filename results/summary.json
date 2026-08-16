@@ -1,0 +1,40 @@
+{
+  "test_only": {
+    "n": 120,
+    "band_accuracy": 1.0,
+    "within_one_band": 1.0,
+    "mean_band_distance": 0.0,
+    "mean_score_error": 0.017313283333333332,
+    "macro_f1": 0.0998095238095238,
+    "fp_rate_on_correct": 0.0,
+    "accuracy_at_70pct_coverage": 1.0,
+    "ece": 0.3317196692196692,
+    "exact_match_rate": 1.0,
+    "self_mean_band_distance": 0,
+    "n_runs": 3,
+    "p50_latency_s": 0.0,
+    "p95_latency_s": 0.016,
+    "mean_tokens": 0,
+    "mean_cost_inr": 0.0,
+    "deferral_rate": 0.0
+  },
+  "static_only": {
+    "n": 120,
+    "band_accuracy": 0.475,
+    "within_one_band": 0.625,
+    "mean_band_distance": 1.1666666666666667,
+    "mean_score_error": 0.2288757,
+    "macro_f1": 0.02127659574468085,
+    "fp_rate_on_correct": 0.0,
+    "accuracy_at_70pct_coverage": 0.4880952380952381,
+    "ece": 0.27499999999999997,
+    "exact_match_rate": 1.0,
+    "self_mean_band_distance": 0,
+    "n_runs": 3,
+    "p50_latency_s": 0.016,
+    "p95_latency_s": 0.032,
+    "mean_tokens": 0,
+    "mean_cost_inr": 0.0,
+    "deferral_rate": 0.0
+  }
+}

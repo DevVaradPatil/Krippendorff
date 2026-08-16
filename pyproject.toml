@@ -21,7 +21,8 @@ dependencies = [
     "radon>=6.0",
     "scikit-learn>=1.5",
     "statsmodels>=0.14",
-    "fast-krippendorff>=0.6",
+    # Distribution is `krippendorff`; `fast-krippendorff` is not on PyPI.
+    "krippendorff>=0.8",
     "numpy>=1.26",
     "matplotlib>=3.9",
 ]
@@ -40,6 +41,11 @@ packages = ["agent", "eval", "data"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+# Benchmark content is data, not project code: reference solutions are written
+# in deliberately plain intro-Python, and S2 lints them itself as a scored
+# feature. Holding them to the project's own rules would be measuring the
+# wrong thing.
+extend-exclude = ["data/problems", "data/synthetic", "agent/_runner.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]

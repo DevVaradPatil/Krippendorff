@@ -35,7 +35,7 @@ def route(
     samples: list[Diagnosis],
     score: Score,
     flags: list[str],
-    policy: RoutingPolicy = RoutingPolicy(),
+    policy: RoutingPolicy | None = None,
 ) -> tuple[Route, str]:
     """Return (route, human-readable reason)."""
     raise NotImplementedError

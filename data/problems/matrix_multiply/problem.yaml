@@ -1,0 +1,12 @@
+id: matrix_multiply
+title: Matrix multiplication
+tags: [matrices, nested-loops, accumulators]
+
+statement: |
+  `multiply(a, b)` returns the matrix product of `a` and `b`, where a matrix is
+  a list of equal-length lists of numbers.
+
+  Return the empty matrix when either input is empty, and raise `ValueError`
+  when the inner dimensions do not match.
+
+misconceptions_applicable: [OBO, ACC, ALI, EDGE, CMP, OK, ALT]

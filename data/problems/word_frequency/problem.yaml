@@ -1,0 +1,15 @@
+﻿id: word_frequency
+title: Word frequency counting
+tags: [strings, dictionaries, scope]
+
+statement: |
+  `word_counts(text)` returns a dictionary mapping each word in `text` to the
+  number of times it appears. Compare words case-insensitively and strip the
+  punctuation characters `.,!?;:` from each end. Ignore empty tokens.
+
+  `most_common(text)` returns the most frequent word, breaking ties in favour of
+  the alphabetically first, and `None` for text containing no words.
+
+  Repeated calls must be independent.
+
+misconceptions_applicable: [MUT, LOOP, CMP, ACC, SCP, OK, ALT]

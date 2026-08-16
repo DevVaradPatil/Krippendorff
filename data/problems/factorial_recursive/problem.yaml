@@ -1,0 +1,11 @@
+﻿id: factorial_recursive
+title: Recursive factorial
+tags: [recursion, base-case]
+
+statement: |
+  Write a recursive function `factorial(n)` returning n! for a non-negative
+  integer `n`, with `factorial(0) == 1`.
+
+  Raise `ValueError` for negative input.
+
+misconceptions_applicable: [REC, CMP, EDGE, OK, ALT]

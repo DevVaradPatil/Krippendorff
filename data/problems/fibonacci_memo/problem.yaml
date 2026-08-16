@@ -1,0 +1,11 @@
+id: fibonacci_memo
+title: Memoised Fibonacci
+tags: [recursion, base-case, dictionaries]
+
+statement: |
+  Write `fibonacci(n)` returning the n-th Fibonacci number with F(0) = 0 and
+  F(1) = 1, computed recursively and memoised so that large `n` stays fast.
+
+  Raise `ValueError` for negative `n`. Repeated calls must be independent.
+
+misconceptions_applicable: [REC, MUT, CMP, EDGE, OK, ALT]

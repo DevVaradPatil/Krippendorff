@@ -1,0 +1,16 @@
+id: inventory_tally
+title: Inventory tally
+tags: [dictionaries, mutable-state, scope]
+
+statement: |
+  `tally(items)` returns a dictionary counting each non-blank, whitespace-
+  stripped item in `items`.
+
+  `restock(inventory, additions)` returns a new inventory with the additions
+  applied, leaving both inputs unchanged.
+
+  `total_units(inventory)` returns the sum of all quantities held.
+
+  Repeated calls to any of these must be independent of one another.
+
+misconceptions_applicable: [MUT, ALI, SCP, LOOP, ACC, CMP, OK, ALT]

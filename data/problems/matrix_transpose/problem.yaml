@@ -1,0 +1,14 @@
+id: matrix_transpose
+title: Matrix transpose and row copy
+tags: [matrices, nested-loops, aliasing]
+
+statement: |
+  A matrix is a list of equal-length lists of numbers.
+
+  `transpose(matrix)` returns a new matrix whose rows are the columns of the
+  input. The empty matrix transposes to the empty matrix.
+
+  `duplicate_rows(matrix)` returns a copy in which every row is an independent
+  list, so modifying a row of the copy leaves the original untouched.
+
+misconceptions_applicable: [OBO, ALI, EDGE, OK, ALT]

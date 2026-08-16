@@ -1,0 +1,14 @@
+id: parse_scores
+title: Parse a score file
+tags: [file-io, strings, type-conversion]
+
+statement: |
+  `parse_scores(lines)` takes an iterable of `"name,score"` strings and returns
+  a dictionary mapping each name to its score as a float. Ignore blank lines,
+  strip surrounding whitespace, and raise `ValueError` for a line that does not
+  hold exactly two comma-separated fields.
+
+  `average_score(lines)` returns the mean of the parsed scores, or `0.0` when
+  there are none.
+
+misconceptions_applicable: [TYPE, LOOP, DIV, CMP, EDGE, OK, ALT]

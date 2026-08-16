@@ -1,0 +1,13 @@
+id: newton_sqrt
+title: Square root by Newton's method
+tags: [root-finding, convergence, floats]
+
+statement: |
+  Write `newton_sqrt(x, tol=1e-12, max_iter=100)` returning the square root of a
+  non-negative number `x` using Newton's method: repeatedly replace the current
+  guess `g` with `(g + x / g) / 2` until two successive guesses differ by less
+  than `tol`.
+
+  Return `0.0` for `x == 0` and raise `ValueError` for negative `x`.
+
+misconceptions_applicable: [CONV, DIV, CMP, EDGE, OK, ALT]

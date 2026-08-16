@@ -1,0 +1,11 @@
+﻿id: sieve_primes
+title: Sieve of Eratosthenes
+tags: [primes, lists, nested-loops]
+
+statement: |
+  Write a function `primes_up_to(n)` that returns a sorted list of every prime
+  number less than or equal to `n`, using the Sieve of Eratosthenes.
+
+  Return an empty list when `n` is less than 2.
+
+misconceptions_applicable: [OBO, CMP, EDGE, OK, ALT]

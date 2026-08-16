@@ -10,15 +10,29 @@ from agent.schemas import CORRECT_LABELS, Misconception, Span
 
 
 def test_taxonomy_is_the_specified_14_classes():
-    expected = {"OBO", "CMP", "ACC", "DIV", "MUT", "ALI", "SCP", "REC",
-                "LOOP", "CONV", "EDGE", "TYPE", "OK", "ALT"}
+    expected = {
+        "OBO",
+        "CMP",
+        "ACC",
+        "DIV",
+        "MUT",
+        "ALI",
+        "SCP",
+        "REC",
+        "LOOP",
+        "CONV",
+        "EDGE",
+        "TYPE",
+        "OK",
+        "ALT",
+    }
     assert {m.value for m in Misconception} == expected
 
 
 def test_correct_labels_are_ok_and_alt():
     # These are the false-positive tests; treating either as a bug label would
     # silently make the most important C2 number meaningless.
-    assert CORRECT_LABELS == {Misconception.OK, Misconception.ALT}
+    assert {Misconception.OK, Misconception.ALT} == CORRECT_LABELS
 
 
 def test_spans_are_one_indexed_and_ordered():

@@ -10,7 +10,9 @@ The full specification lives in [GRADING_AGENT_PROJECT.md](GRADING_AGENT_PROJECT
 
 The project's claim is *measured consistency and calibrated deferral against a known human-inconsistency baseline* (Krippendorff's α = 0.22, 1.79-band self-disagreement), not "agreement with human grades." Any change that improves human agreement while worsening self-consistency or `OK`/`ALT` false-positive rate is a regression.
 
-Status: scaffolded, nothing implemented. Module stubs raise `NotImplementedError`.
+Status: **week 1 complete.** The deterministic spine works end to end — S0 static gate, S1 Docker sandbox, S2 static analysis, S5 aggregation, the mutation generator, and the eval harness with two baselines measured on 120 labelled submissions. S4/S6/S7 and the LLM client are still stubs raising `NotImplementedError`.
+
+Read [results/REPORT.md](results/REPORT.md) before trusting any number: the headline test-only band accuracy of 1.000 is a **tautology**, because ground truth is rule-derived from the same tests the baseline reads. Band accuracy does not discriminate on synthetic data. Quote macro-F1 (0.100) and the score error split by label (0.003 buggy vs 0.072 on OK/ALT) instead.
 
 ## Commands
 
@@ -26,13 +28,20 @@ ruff check . && ruff format --check .   # lint + format
 ```
 
 ```bash
-python -m eval.harness --config eval/configs/default.yaml   # the core loop
-python -m eval.baselines --baseline test_only              # one baseline
-python -m eval.adversarial --defenses on                   # C4 attack suite
-python -m data.mutations.generate --out data/synthetic     # regenerate synthetic set
+python -m data.mutations.generate            # regenerate the labelled set (~2 min cold)
+python -m eval.harness --n-runs 3            # the core loop; --limit N for a quick pass
+python -m eval.baselines --baseline test_only
+python -m eval.adversarial --defenses on     # C4 suite: not implemented yet
 ```
 
-Entry points are declared in [pyproject.toml](pyproject.toml) and do not work yet — implement the module, then the command.
+Docker Desktop must be running before either of the first two — they execute every
+submission in a container. `agent.sandbox.available()` reports whether the daemon
+is reachable; tests marked `docker` skip when it is not.
+
+Sandbox results are cached under `.cache/sandbox/` keyed on (source, tests,
+runner, image, limits), so generation and the baseline each execute a given
+submission once. That makes reruns nearly free and makes the harness's latency
+numbers meaningless on a warm cache — clear it before quoting timings.
 
 ## Environment on this machine
 
@@ -40,6 +49,8 @@ Entry points are declared in [pyproject.toml](pyproject.toml) and do not work ye
 - **Docker Desktop 29.7.2**, WSL2 backend, Linux containers. Verified working with the exact sandbox flags S1 needs: `docker run --rm --network none --memory 256m --cpus 1 --pids-limit 64 python:3.12-slim` runs and the image is pulled locally. The `--pids-limit` flag is `pids_limit` in the Python SDK's `containers.run`.
 - Docker Desktop is installed **per-user**, not in `Program Files`: `C:\Users\User\AppData\Local\Programs\DockerDesktop\resources\bin`. That directory is on the machine PATH, but a shell started before the install won't see it — if `docker` is "not recognized", the shell is stale, not the install. The `docker-credential-desktop` helper lives in the same directory, so a partial PATH breaks image *pulls* while `docker info` still works.
 - The `docker` CLI is **not** available inside WSL Ubuntu (Docker Desktop's WSL integration for that distro is off). This doesn't matter — the Python SDK talks to the Windows daemon over the named pipe. Don't add a WSL execution path.
+- **`docker.from_env()` does not work here.** It assumes `\\.\pipe\docker_engine`, but Docker Desktop's default context (`desktop-linux`) listens on `dockerDesktopLinuxEngine`, so the SDK reports "cannot find the file specified" while the CLI works fine. [agent/sandbox.py](agent/sandbox.py) tries `DOCKER_HOST` and then the known endpoints in order; use `_client()` rather than constructing a client yourself.
+- Docker Desktop **stops when the machine idles**, and the daemon is then unreachable until the app is relaunched. If the sandbox raises `SandboxUnavailableError`, check the app is running before debugging anything else.
 - No Ollama installed. Model calls will hit hosted free tiers; keep the cache on so reruns are free.
 - Git repo on `main`, remote `origin` → https://github.com/DevVaradPatil/Krippendorff.git. The local directory is still named `grading_agent`; that's cosmetic.
 
@@ -77,9 +88,22 @@ The 14-label misconception taxonomy (`OBO`, `CMP`, `ACC`, `DIV`, `MUT`, `ALI`, `
 
 Rubric criteria, weights and band descriptors live in [rubric/rubric.yaml](rubric/rubric.yaml). Code reads them; it does not hardcode weights.
 
+## Ground truth and the mutation generator
+
+[data/mutations/operators.py](data/mutations/operators.py) finds mutation sites on the AST but splices replacement **text** over the node's source span. Never switch it to `ast.unparse` — that discards every comment in the file, which would silently zero the documentation criterion and make the `OK` operator's comment-stripping a no-op.
+
+Two filters in [data/mutations/generate.py](data/mutations/generate.py) keep labels honest, and both must survive any refactor:
+
+- A mutant that **passes the whole suite is discarded as equivalent**, not labelled. 10 of 173 were dropped this way.
+- An `OK`/`ALT` variant that **fails any test is discarded**, because a supposedly-correct sample that is actually broken corrupts the false-positive rate.
+
+`tests/test_operators.py` asserts that every label a problem declares in `misconceptions_applicable` has an operator that actually matches it — a declared-but-unmatchable label silently under-fills that class.
+
 ## Working order
 
-Build the eval before the agent. Week 1's deliverable is a harness that produces a **test-only baseline number** on 300 labeled submissions — every later claim is measured relative to it. A change to the agent with no eval run attached is not finished work.
+Build the eval before the agent. Week 1's deliverable — a harness producing a test-only baseline number — is **done**; every later claim is measured relative to it. A change to the agent with no eval run attached is not finished work.
+
+Next: S4 diagnosis and the zero-shot LLM baseline, which need a provider key in `.env`. The dataset is 120 submissions against the spec's target of 300; yield is ~10 per problem, so ~8 more problems closes it (use the `add-problem` skill).
 
 Baselines in [eval/baselines.py](eval/baselines.py) are non-negotiable: test-only, zero-shot LLM, static-analysis-only, human (from Menagerie), full agent. If the full agent loses to test-only, that is a reportable finding, not a bug to hide.
 

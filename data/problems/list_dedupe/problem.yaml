@@ -1,0 +1,16 @@
+id: list_dedupe
+title: Deduplicate a list
+tags: [lists, aliasing, mutable-state]
+
+statement: |
+  Write two functions.
+
+  `dedupe(items)` returns a new list containing the items of `items` with
+  duplicates removed, preserving the order of first appearance. Repeated calls
+  must be independent of one another.
+
+  `merged_unique(a, b)` returns a new list holding the unique items of `a`
+  followed by any items of `b` not already present. Neither input list may be
+  modified.
+
+misconceptions_applicable: [MUT, ALI, LOOP, OK, ALT]

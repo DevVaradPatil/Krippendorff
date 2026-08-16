@@ -1,0 +1,11 @@
+id: gcd_euclid
+title: Euclid's algorithm
+tags: [recursion, number-theory]
+
+statement: |
+  `gcd(a, b)` returns the greatest common divisor of two non-negative integers
+  using Euclid's algorithm, recursively. Raise `ValueError` for negative input.
+
+  `lcm(a, b)` returns the least common multiple, and 0 when either input is 0.
+
+misconceptions_applicable: [REC, CMP, EDGE, OK, ALT]
