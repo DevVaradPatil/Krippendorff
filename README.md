@@ -42,7 +42,9 @@ Submission → S0 static gate → S1 sandboxed tests → S2 static features
            → S6 confidence & routing → S7 feedback
 ```
 
-Correctness is scored from the test suite and never touches the model. Style is scored from ruff and radon and never touches the model. Only design and documentation reach the LLM, which returns a structured diagnosis with mandatory line-number evidence. Three samples per submission give a disagreement measure, which both quantifies consistency and decides what gets routed to a human.
+Correctness is scored from the test suite and never touches the model. Style is scored from ruff and radon and never touches the model. Only design reaches the LLM, which returns a structured diagnosis with mandatory line-number evidence, validated against the file — a citation to a line that does not exist is a failed diagnosis and a human deferral, not a grade.
+
+The feedback stage is deliberately given *less* than the diagnosis stage: S4 sees the reference solution, S7 does not, because the only thing the reference could add to feedback is the answer. A leak detector then verifies that rather than trusting it. **0 leaks in 15 generated responses.**
 
 That structure is also the strongest injection defense available: an instruction hidden in a comment cannot move the 60% of the score that comes from tests.
 

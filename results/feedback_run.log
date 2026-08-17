@@ -1,0 +1,47 @@
+﻿model: gemini-3.1-flash-lite
+15 submissions, 2 calls each worst case
+
+shipped with a leak               0/15
+fell back to the template         0/15
+highest overlap ratio shipped     0.000 (limit 0.15)
+
+model calls: 15 live, 15 cached
+
+--- newton_sqrt::div_floor#2 (DIV) ---
+On line 12, you are calculating the next guess using the expression (guess + x
+// guess) / 2.0.
+
+How does the behavior of the // operator differ from the /
+operator when dealing with non-integer results, and could that difference
+affect the precision of your 'better' guess?
+
+Try printing the value of
+'better' inside the loop for a non-integer input like 2.0 to see if the values
+are behaving as you expect.
+
+--- gcd_euclid::edge_guard_removed#0 (EDGE) ---
+In lines 4 through 9, your gcd function processes the inputs using recursion,
+but it does not check the values of 'a' or 'b' before beginning the
+calculation.
+
+How does your current implementation behave if a negative
+integer is passed as an argument, and where in the function could you verify
+that the inputs meet the required criteria?
+
+Consider what specific condition
+needs to be checked at the very beginning of the function to ensure that
+negative inputs are handled as requested.
+
+--- sieve_primes::obo_range_bound#1 (OBO) ---
+On line 16, you are using the range function to iterate through multiples of
+p, starting from p squared and ending before n.
+
+If n is a prime number, does
+the range function on line 16 include n itself as a potential multiple to be
+marked as False?
+
+Consider how the stop argument in the range function behaves
+and whether it includes or excludes the value provided when determining the
+bounds of your loop.
+
+wrote E:\Projects\Vibes\grading_agent\results\feedback.json

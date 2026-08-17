@@ -250,6 +250,62 @@ accented identifier or an emoji, no malice required. Fixed with an explicit
   reach the correctness score even in principle. The 20% naive figure is the
   model believing the printed claim, not the harness believing it.
 
+## 7b. S7 — Feedback and solution leakage
+
+15 buggy submissions, `gemini-3.1-flash-lite`, feedback generated from the S4
+diagnosis and checked against the reference before being returned.
+
+| | |
+|---|---|
+| Shipped with a leak | **0/15** |
+| Fell back to the template | **0/15** |
+| Highest overlap ratio shipped | **0.000** (limit 0.15) |
+
+**S7 is not given the reference solution.** S4 gets it, because diagnosis
+benefits from knowing what correct looks like; S7 does not, because the only
+thing the reference could add to feedback is the answer. Same structural move as
+keeping correctness out of the prompt: remove the capability, then verify rather
+than trust. The detector is the verification, not the guarantee — which is why
+0/15 is unsurprising and why it is not, on its own, evidence the detector works.
+
+### Validating the detector against its own output
+
+A zero leak rate is only meaningful if the check can fire on this data, so each
+of the 15 shipped responses was re-tested with the fix spliced in and with the
+whole solution pasted. That found two defects:
+
+1. **The n-gram check could never fire.** It measured what share of the
+   *feedback* resembled the reference, which prose dilutes: a solution pasted
+   whole into a paragraph scored 0.117 against a 0.15 threshold. Reversed to
+   measure what share of the *reference* is reproduced, a pasted solution now
+   scores 0.533–1.000 and ordinary feedback 0.000.
+2. **The tokeniser dropped numeric literals.** `if x < 0:` tokenised to four
+   tokens with the `0` silently gone, fell under the five-token floor, and
+   escaped — and that removed-guard line is the shortest, most leakable fix in
+   the taxonomy. 1 of 15 spliced-fix cases went undetected because of it.
+
+After both fixes: **15/15 caught** for a spliced fix and 15/15 for a pasted
+solution, with the shipped text unchanged at 0.000. Pinned by
+`tests/test_feedback.py::TestDetectorHasMargin`.
+
+The detector also subtracts the student's own code from the reference before
+comparing. Quoting a student's line back at them is the core move of useful
+feedback, and treating it as a leak would silently replace every response with
+the template — working software that teaches nobody anything.
+
+### What the feedback looks like
+
+Sampled from `results/feedback.json`, on an `OBO` mutant of the prime sieve:
+
+> On line 16, you are using the range function to iterate through multiples of
+> p, starting from p squared and ending before n. If n is a prime number, does
+> the range function on line 16 include n itself as a potential multiple to be
+> marked as False? Consider how the stop argument in the range function behaves.
+
+It cites the student's own line, asks rather than tells, and does not state the
+fix. Whether that is *pedagogically* good is not something these numbers answer;
+15 samples were read by hand, and a proper judgement needs students.
+
 ## 7a. Operational
 
 | | Full agent | Zero-shot |

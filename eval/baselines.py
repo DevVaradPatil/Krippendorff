@@ -249,11 +249,13 @@ class FullAgent:
         *,
         include_comments: bool = False,
         use_cache: bool = True,
+        write_feedback: bool = False,
     ):
         self.config = config
         self.policy = policy or RoutingPolicy()
         self.include_comments = include_comments
         self.use_cache = use_cache
+        self.write_feedback = write_feedback
         self.run_offset = 0  # set by the harness on each repeat; see run()
         self._problems = {p.id: p for p in load_all()}
 
@@ -266,6 +268,7 @@ class FullAgent:
             include_comments=self.include_comments,
             use_cache=self.use_cache,
             run_offset=self.run_offset,
+            write_feedback=self.write_feedback,
         )
 
 

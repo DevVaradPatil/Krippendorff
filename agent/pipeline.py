@@ -15,6 +15,7 @@ import time
 
 from agent import diagnose as s4
 from agent import evidence as s3
+from agent import feedback as s7
 from agent import static_analysis as s2
 from agent import static_gate as s0
 from agent.aggregate import aggregate, load_rubric
@@ -35,6 +36,7 @@ def grade(
     limits: SandboxLimits | None = None,
     use_cache: bool = True,
     run_offset: int = 0,
+    write_feedback: bool = False,
 ) -> GradingResult:
     """Run one submission through the full pipeline."""
     policy = policy or RoutingPolicy()
@@ -85,12 +87,34 @@ def grade(
     score = aggregate(results, features, design=design, rubric=rubric)
     destination, reason = route(samples, score, flags=[], policy=policy)
 
+    # S7 costs another call per submission and never changes the grade, so it is
+    # opt-in: the eval runs that produce C1-C3 do not need it.
+    feedback = None
+    if write_feedback and agreed is not None:
+        feedback, used_template, completion = s7.generate(
+            agreed,
+            submission.source,
+            results,
+            problem.statement,
+            problem.reference,
+            config,
+            run_index=run_offset,
+            use_cache=use_cache,
+        )
+        if completion is not None:
+            tokens_in += completion.tokens_in
+            tokens_out += completion.tokens_out
+            cost += completion.cost_inr(config)
+        if used_template:
+            failures.append("feedback fell back to template")
+
     return GradingResult(
         submission_id=submission.submission_id,
         score=score,
         diagnosis=agreed,
         route=destination,
         route_reason=reason if not failures else f"{reason}; {failures[0]}",
+        feedback=feedback,
         consistency_samples=[s.label.value for s in samples],
         model=config.name,
         tokens=tokens_in + tokens_out,

@@ -10,7 +10,7 @@ The full specification lives in [GRADING_AGENT_PROJECT.md](GRADING_AGENT_PROJECT
 
 The project's claim is *measured consistency and calibrated deferral against a known human-inconsistency baseline* (Krippendorff's α = 0.22, 1.79-band self-disagreement), not "agreement with human grades." Any change that improves human agreement while worsening self-consistency or `OK`/`ALT` false-positive rate is a regression.
 
-Status: **C1–C4 measured.** S0–S6 run end to end on 120 labelled submissions. Full agent: macro-F1 **0.932**, false-positive rate on correct code **0.000**, self-disagreement **0.00 bands** vs the human 1.79, injection attack success **1%** vs 19% for a naive grader. Zero-shot on the same model and items: 0.472 macro-F1 and 0.125 FP — the pipeline is the difference. S7 feedback is still a stub; the cross-model frontier is unmeasured.
+Status: **C1–C4 measured, S0–S7 complete.** Full agent: macro-F1 **0.932**, false-positive rate on correct code **0.000**, self-disagreement **0.00 bands** vs the human 1.79, injection attack success **1%** vs 19% for a naive grader. Zero-shot on the same model and items: 0.472 macro-F1 and 0.125 FP — the pipeline is the difference. S7 ships feedback with 0/15 solution leaks. The cross-model frontier and the Menagerie human baseline are unmeasured.
 
 Read [results/REPORT.md](results/REPORT.md) before trusting any number. Two things to carry into any change: the test-only band accuracy of 1.000 is a **tautology** (ground truth is rule-derived from the same tests the baseline reads, so band accuracy does not discriminate on synthetic data), and the agent is shown the reference solution while every mutant is a small edit to it — so diagnosis is partly diff-reading and 0.932 should be expected to fall on real submissions.
 
@@ -82,6 +82,8 @@ The pipeline is S0→S7 (diagram in spec §4). Each stage maps to one module:
 | S6 confidence + routing | [agent/confidence.py](agent/confidence.py) | yes |
 | S7 feedback + leak detection | [agent/feedback.py](agent/feedback.py) | LLM, constrained |
 
+S7 is opt-in (`write_feedback=True`): it costs a call per submission and never changes a grade, so the C1–C3 runs skip it. Measure it with `python -m eval.feedback_run --n 15`.
+
 Rules that are load-bearing — violating any of them invalidates the evaluation:
 
 1. **Correctness sub-scores never come from the LLM.** They are computed from S1 test results. Style sub-scores come from S2. Only design/documentation criteria reach S4. This is both the variance-reduction mechanism and the primary prompt-injection defense.
@@ -89,7 +91,7 @@ Rules that are load-bearing — violating any of them invalidates the evaluation
 3. **Every diagnosis carries evidence line spans** into the student's source. A diagnosis without a valid span is a failed diagnosis, not a passing one — validate spans against the file rather than trusting the model.
 4. **Comments and docstrings are stripped from the code before it reaches the LLM** and passed separately, explicitly framed as untrusted. This is where injections live.
 5. **Ground-truth scores are derived by rule from the applied mutation**, never by asking a model or a human. Located in [data/mutations/](data/mutations/) alongside the operator that produced them.
-6. **Feedback must not leak the reference solution** — [agent/feedback.py](agent/feedback.py) runs substring and n-gram overlap checks before returning.
+6. **Feedback must not leak the reference solution.** The primary mechanism is that **S7 is never given the reference** — only S4 gets it. [agent/feedback.py](agent/feedback.py) then verifies with a verbatim-line check and an n-gram check, both of which subtract the student's own code first (quoting their line back is the point of feedback, not a leak). The n-gram ratio is normalised **over the reference**, not over the feedback: the other direction is diluted by prose and measured 0.117 for a solution pasted whole, under its own 0.15 threshold, so it could never fire.
 
 ## Shared contracts
 
