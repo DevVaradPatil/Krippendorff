@@ -134,5 +134,5 @@ Run it per-arm (`--arms naive`), not all three at once: each arm is ~90 calls an
 
 - Providers (Gemini/Groq/OpenRouter/Ollama) are reached through one OpenAI-compatible client in [agent/llm.py](agent/llm.py); cross-model comparison is a deliverable, so never hardcode a model name outside config.
 - Every model call is cached on a hash of (prompt, model, params, seed) so N=5 consistency runs and reruns are cheap; the consistency runs deliberately bypass the cache via a run index in the key.
-- Results are append-only JSONL under `results/`; figures are regenerated from them, never edited by hand.
+- Results are append-only JSONL under `results/`; figures are regenerated from them with `python -m eval.figures`, never edited by hand. That loader keys records on **(system, model, run_index)** — two models graded as `full_agent` at run 0, and without the model in the key the later sweep silently replaces the earlier one and every figure shows a different model than its caption claims.
 - The package directory `eval/` shadows the builtin `eval()` only when imported as a bare name — import submodules (`from eval import metrics`), don't `import eval`.

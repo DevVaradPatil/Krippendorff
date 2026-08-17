@@ -179,6 +179,46 @@ ECE 0.332 for test-only is real and reflects deliberate under-confidence: its
 confidence is `|2·pass_fraction − 1|`, so a submission failing half its tests
 reports low confidence while still landing in the right band.
 
+## 6a. Cross-model frontier
+
+Same 120 items, same pipeline, same routing policy, `n_samples=1`:
+
+| | `gemini-3.1-flash-lite` | `gemini-3.5-flash-lite` |
+|---|---|---|
+| Macro-F1 | 0.932 | **0.952** |
+| Band accuracy | **0.892** | 0.867 |
+| Score error | **0.020** | 0.025 |
+| FP on OK/ALT | 0.000 | 0.000 |
+| Accuracy @ 70% coverage | **0.917** | 0.893 |
+| ECE | **0.107** | 0.133 |
+| Deferred to human | 15/120 | 13/120 |
+| Tokens in / out | 184,641 / 13,295 | 171,359 / 10,607 |
+| Schema retries | 0 | 1 |
+| Wall clock | 600 s | 590 s |
+
+**The newer model diagnoses better and bands worse.** 3.5 gains on macro-F1
+(+0.020, driven by `DIV` 0.95→1.00, `ACC` 0.86→0.93, `REC` 0.80→0.89) while
+losing on band accuracy (−0.025) and calibration (ECE +0.026). Those move in
+opposite directions because they measure different things: the label comes from
+the diagnosis, the band is dominated by test results plus the design sub-score,
+and 3.5 simply rates design a little differently. Neither model false-positives
+on correct work.
+
+**Neither difference is large enough to act on at n=120.** A 0.020 macro-F1 gap
+is roughly two or three reclassified items. If a choice had to be made on this
+evidence, 3.1 is the better default — equal on the metric that matters most
+(0.000 false positives), better calibrated, and it needed no schema retry.
+
+Two caveats that stop this from being a clean comparison:
+
+- **The arms are not perfectly matched.** 3.5 rejects `reasoning_effort: none`
+  with a 400, so it runs at `low` while 3.1 does not reason at all. Part of the
+  difference is that configuration, not the model.
+- **Cost is not differentiated here.** The per-token prices in the config are
+  unverified for these two preview models, so the ₹ column would be a guess
+  dressed as a measurement. Token counts above are measured; prices are not.
+  Both runs were free on the tier that served them.
+
 ## 7. C4 — Robustness
 
 10 buggy submissions × 8 injection families × 3 architectures = 240 attacked
@@ -322,6 +362,23 @@ requests/minute and the config paces at 12, so 120 submissions take ten minutes
 regardless of how fast the model answers. The run cost nothing — it fits inside
 the free tier — and ₹2.05 is what it would cost at list price.
 
+## 7c. Figures
+
+Regenerate with `python -m eval.figures` (no model calls, reads
+`results/runs.jsonl`). All four are pinned to `gemini-3.1-flash-lite`.
+
+| Figure | What it shows |
+|---|---|
+| `figures/risk_coverage.png` | The full agent's curve is flat near 0.92 from 10% to 100% coverage; zero-shot decays to 0.46. A flat curve means confidence is *not* separating right from wrong — the agent is simply accurate everywhere, so selective grading buys little on this data. |
+| `figures/per_class_f1.png` | Full agent vs zero-shot per class, ordered by support, with n printed on each label so the thin classes cannot be read as results. |
+| `figures/confusion_matrix.png` | A clean diagonal. The off-diagonal mass is `CMP`→`EDGE` (2) and `CMP`→`LOOP` (2), which share the non-termination symptom. |
+| `figures/false_positive_rate.png` | The headline safety number: 12.5% for zero-shot, 0.0% for everything else. |
+
+The flat risk–coverage curve is worth stating plainly rather than presenting as a
+success: the C3 claim was meant to be "the agent knows when it doesn't know", and
+this data cannot demonstrate that, because the agent is nearly always right. A
+harder dataset — real submissions — is where deferral would earn its place.
+
 ## 8. Limitations
 
 1. **The set is 120 submissions, against a target of 300.** Yield is ~10 kept
@@ -345,10 +402,11 @@ the free tier — and ₹2.05 is what it would cost at list price.
 6. **Synthetic mutants are clean.** The realism layer (LLM rewriting in a
    struggling-student voice) is not built, so the gap to real submissions is
    unmeasured.
-7. **One model, one temperature, one sample.** Everything above is
-   `gemini-3.1-flash-lite` at temperature 0 with `n_samples=1`. The cross-model
-   frontier is unmeasured, and `gemini-3.5-flash-lite` is configured and has its
-   own free quota, so that comparison is one command away.
+7. **Two models, one temperature, one sample.** Everything above is at
+   temperature 0 with `n_samples=1`, on two closely-related Gemini lite models
+   (§6a). A frontier spanning a genuinely different family — Llama, Qwen, a local
+   7B — is unmeasured, and that is where a cost/accuracy trade-off would actually
+   appear; the two models here differ by 0.02 macro-F1 and cost the same.
 8. **The agent has seen the reference solution.** S3 hands the model the correct
    implementation as trusted context, and every mutant is a small edit to it, so
    diagnosis is partly a diff-reading task. Real submissions do not resemble the

@@ -1,0 +1,51 @@
+﻿dataset: 120 labelled submissions from E:\Projects\Vibes\grading_agent\data\synthetic\submissions.jsonl
+model:   gemini-3.5-flash-lite @ temperature 0.0
+
+  full_agent run 1/1: 120 submissions in 590.2s
+
+--- full_agent: per-class diagnosis ---
+label    prec    rec     F1    n
+ACC      1.00   0.88   0.93    8
+ALI      1.00   1.00   1.00    4
+ALT      0.75   1.00   0.86    3
+CMP      1.00   0.86   0.93   29
+CONV     1.00   1.00   1.00    3
+DIV      1.00   1.00   1.00   11
+EDGE     0.93   1.00   0.96   13
+LOOP     0.75   1.00   0.86    3
+MUT      1.00   1.00   1.00    3
+OBO      0.87   1.00   0.93   13
+OK       1.00   0.95   0.98   21
+REC      0.80   1.00   0.89    4
+SCP      1.00   1.00   1.00    4
+TYPE     1.00   1.00   1.00    1
+
+top confusions (truth -> predicted):
+    OK -> ALT  1
+   CMP -> REC  1
+   CMP -> OBO  1
+   CMP -> LOOP 1
+   CMP -> EDGE 1
+   ACC -> OBO  1
+
+deferred to human review: 13/120
+    3  score 0.541 sits on a band edge
+    2  score 0.859 sits on a band edge
+    1  score 0.708 sits on a band edge
+    1  score 0.416 sits on a band edge
+    1  score 0.534 sits on a band edge
+    1  score 0.411 sits on a band edge
+    1  score 0.564 sits on a band edge
+    1  score 0.688 sits on a band edge
+    1  score 0.417 sits on a band edge
+    1  score 0.400 sits on a band edge
+
+system                band acc     band dist     score err      macro-F1  FP on OK/ALT       acc@70%           ECE    self-agree
+--------------------------------------------------------------------------------------------------------------------------------
+full_agent               0.867         0.133         0.025         0.952         0.000         0.893         0.133         1.000
+
+human baseline for reference: self-disagreement 1.79 bands, inter-rater alpha 0.22 (Messer et al. 2025)
+
+model calls: 110 live, 10 cached, 1 schema retries · tokens in/out: 171359/10607
+
+wrote E:\Projects\Vibes\grading_agent\results\summary.json

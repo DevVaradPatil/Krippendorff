@@ -32,6 +32,12 @@ A zero false-positive rate is likewise cheap on its own: static-analysis-only sc
 
 Negative findings are reported here too. The largest open threat to the headline: the agent is shown the reference solution, and every mutant is a small edit to it, so diagnosis is partly a diff-reading task and macro-F1 should be expected to fall on real submissions.
 
+![False-positive rate on correct submissions](results/figures/false_positive_rate.png)
+
+![Risk–coverage curve](results/figures/risk_coverage.png)
+
+Both regenerate from `results/runs.jsonl` with `python -m eval.figures`. The full agent's risk–coverage curve is flat, and that is a caveat rather than a win: it means confidence is not separating right answers from wrong ones, because the agent is nearly always right on synthetic data. Selective grading should earn its place on real submissions, not here.
+
 ## How it works
 
 Deterministic tools do everything they possibly can; the model is used only where judgment is genuinely required.

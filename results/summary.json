@@ -1,21 +1,21 @@
 {
   "full_agent": {
-    "n": 60,
-    "band_accuracy": 0.9333333333333333,
+    "n": 120,
+    "band_accuracy": 0.8666666666666667,
     "within_one_band": 1.0,
-    "mean_band_distance": 0.06666666666666667,
-    "mean_score_error": 0.018500000000000006,
-    "macro_f1": 0.952195315996221,
+    "mean_band_distance": 0.13333333333333333,
+    "mean_score_error": 0.024500000000000004,
+    "macro_f1": 0.9521127150047011,
     "fp_rate_on_correct": 0.0,
-    "accuracy_at_70pct_coverage": 0.9523809523809523,
-    "ece": 0.06666666666666665,
+    "accuracy_at_70pct_coverage": 0.8928571428571429,
+    "ece": 0.1333333333333333,
     "exact_match_rate": 1.0,
-    "self_mean_band_distance": 0,
-    "n_runs": 3,
-    "p50_latency_s": 0.031,
-    "p95_latency_s": 0.047,
-    "mean_tokens": 1636.2166666666667,
-    "mean_cost_inr": 0.017117883333333334,
-    "deferral_rate": 0.13333333333333333
+    "self_mean_band_distance": 0.0,
+    "n_runs": 1,
+    "p50_latency_s": 19.672,
+    "p95_latency_s": 49.766,
+    "mean_tokens": 1650.85,
+    "mean_cost_inr": 0.016882366666666666,
+    "deferral_rate": 0.10833333333333334
   }
 }
