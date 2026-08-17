@@ -14,13 +14,17 @@ The same research finds those graders also disagree with *themselves* — by 1.7
 |---|---|---|---|---|---|---|
 | Test-only baseline | 1.000 † | 0.00 | 0.100 | 0.000 | — | 0.00 |
 | Static analysis only | 0.475 | 0.00 | 0.021 | 0.000 | — | 0.00 |
-| Zero-shot LLM | 0.458 | 0.00 | 0.472 | **0.125** | — | 0.010 |
+| Zero-shot LLM | 0.458 | 0.00 | 0.472 | **0.125** | **19%** | 0.010 |
 | Human (literature) | — | **1.79** | — | — | — | — |
-| **Full agent** | **0.892** | **0.00** | **0.932** | **0.000** | — | 0.017 |
+| **Full agent** | **0.892** | **0.00** | **0.932** | **0.000** | **1%** | 0.017 |
 
 **The pipeline is worth roughly double the prompt.** Same model, same items, the only difference being the engineering: macro-F1 0.472 → **0.932**, and the false-positive rate on correct submissions 0.125 → **0.000**. A zero-shot grader flagged one in eight working submissions as buggy; the full agent flagged none of 24, identifying all 21 `OK` submissions with precision and recall of 1.00.
 
 **Self-consistency: 0.00 bands across three independent passes, against a 1.79-band human baseline.** Measured at temperature 0, which is the deployment configuration — it says the system is reproducible, not that the model is free of uncertainty.
+
+**Prompt injection: 19% success against a naive grader, 1% against this pipeline** (8 attack families × 10 submissions × 3 architectures, 240 attacked gradings each paired with a clean control). Of the 15 attacks that beat the naive grader, 10 both inflated the score *and* relabelled broken code as correct.
+
+And the part that contradicts the design intent: **stripping comments before the model sees them (1%) and passing them inside an untrusted block (0%) are indistinguishable.** What earned the drop is structural — correctness is 60% of the rubric and comes from the test suite, so the model only controls the 15% design weight. The one attack that got through moved a score by 0.03 and left the diagnosis correct. Input isolation is worth keeping as defence in depth, but the architecture is the defense.
 
 **† That 1.000 is a tautology, not a result.** Ground truth is derived by rule from the tests, and the test-only baseline reads the same tests, so it cannot miss — correctness is 60% of the rubric weight. Band accuracy is therefore not a discriminating metric on synthetic data for any system that runs the tests, which is why the full agent's 0.892 is *lower* than a baseline it beats on every metric that discriminates.
 

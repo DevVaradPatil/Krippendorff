@@ -10,7 +10,7 @@ The full specification lives in [GRADING_AGENT_PROJECT.md](GRADING_AGENT_PROJECT
 
 The project's claim is *measured consistency and calibrated deferral against a known human-inconsistency baseline* (Krippendorff's α = 0.22, 1.79-band self-disagreement), not "agreement with human grades." Any change that improves human agreement while worsening self-consistency or `OK`/`ALT` false-positive rate is a regression.
 
-Status: **weeks 1–3 measured.** S0–S6 run end to end on 120 labelled submissions. Full agent: macro-F1 **0.932**, false-positive rate on correct code **0.000**, self-disagreement **0.00 bands** vs the human 1.79. Zero-shot on the same model and items: 0.472 and 0.125 — the pipeline is the difference. S7 feedback and the C4 adversarial suite are still stubs.
+Status: **C1–C4 measured.** S0–S6 run end to end on 120 labelled submissions. Full agent: macro-F1 **0.932**, false-positive rate on correct code **0.000**, self-disagreement **0.00 bands** vs the human 1.79, injection attack success **1%** vs 19% for a naive grader. Zero-shot on the same model and items: 0.472 macro-F1 and 0.125 FP — the pipeline is the difference. S7 feedback is still a stub; the cross-model frontier is unmeasured.
 
 Read [results/REPORT.md](results/REPORT.md) before trusting any number. Two things to carry into any change: the test-only band accuracy of 1.000 is a **tautology** (ground truth is rule-derived from the same tests the baseline reads, so band accuracy does not discriminate on synthetic data), and the agent is shown the reference solution while every mutant is a small edit to it — so diagnosis is partly diff-reading and 0.932 should be expected to fall on real submissions.
 
@@ -119,6 +119,14 @@ Next: run the LLM systems. `.env` needs `GEMINI_API_KEY` from https://aistudio.g
 `tests/test_pipeline.py` stubs the model and asserts the split holds in the real wiring: swinging the design sub-score from 1.0 to 0.0 moves the total by exactly 0.15, the design weight, and no more. If that assertion ever fails, the LLM has leaked into a criterion it does not own.
 
 Baselines in [eval/baselines.py](eval/baselines.py) are non-negotiable: test-only, zero-shot LLM, static-analysis-only, human (from Menagerie), full agent. If the full agent loses to test-only, that is a reportable finding, not a bug to hide.
+
+## The C4 suite
+
+[eval/adversarial.py](eval/adversarial.py) compares three *architectures* rather than toggling a flag: `naive` (zero-shot, raw code), `quarantine` (pipeline, comments shown inside an untrusted block), `stripped` (pipeline as shipped). Every attacked grading is paired with a clean control of the same submission on the same model — without it, "attack success" measures nothing.
+
+Measured result: comment stripping and comment quarantining are **indistinguishable** (1% vs 0%). The drop from 19% comes from correctness being computed from tests, which caps what any injection can move at the 15% design weight. Don't add input-sanitising defenses and claim credit for the structural one.
+
+Run it per-arm (`--arms naive`), not all three at once: each arm is ~90 calls and about eight minutes at the free tier's pacing.
 
 ## Conventions
 

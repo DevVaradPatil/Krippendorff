@@ -50,8 +50,18 @@ def _ruff_violations(source: str) -> dict[str, int]:
         "-",
     ]
     try:
+        # encoding is explicit, not inherited: Windows defaults this pipe to
+        # cp1252, which raises on any character outside Latin-1. Student code
+        # containing an emoji, an accented identifier, or a homoglyph attack
+        # would take the whole grader down with a UnicodeEncodeError.
         completed = subprocess.run(
-            command, input=source, capture_output=True, text=True, timeout=60
+            command,
+            input=source,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=60,
         )
         findings = json.loads(completed.stdout or "[]")
     except (OSError, json.JSONDecodeError, subprocess.TimeoutExpired):
