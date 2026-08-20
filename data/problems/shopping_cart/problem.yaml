@@ -1,0 +1,17 @@
+id: shopping_cart
+title: Shopping cart
+tags: [dictionaries, mutable-state, aliasing]
+
+statement: |
+  `add_items(names, cart=None)` counts each name into a cart and returns it,
+  starting a fresh cart when none is passed.
+
+  `collect_problems(quantities, problems=None)` returns the quantities that are
+  not strictly positive, skipping the valid ones.
+
+  `snapshot(cart)` returns an independent copy, and `merge_carts(first, second)`
+  returns a new cart holding both without modifying either input.
+
+  Repeated calls must be independent of one another.
+
+misconceptions_applicable: [MUT, ALI, LOOP, CMP, OK, ALT]

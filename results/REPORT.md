@@ -2,8 +2,9 @@
 
 **Run date:** 2026-08-16 · **Schema:** 0.1.0 · **Dataset:** `data/synthetic/submissions.jsonl`
 **Model:** `gemini-3.1-flash-lite` @ temperature 0.0, `reasoning_effort: none`
-**Status:** Weeks 1–3. S0–S6 measured on 120 labelled submissions. S7 feedback and
-the C4 adversarial suite are not built.
+**Status:** C1–C4 measured, S0–S7 complete. C1–C3 and S7 are measured on the
+current 179-item set; **C4 (§7) was measured on the earlier 120-item set** and is
+labelled as such rather than silently re-attributed.
 
 Reproduce with:
 
@@ -14,91 +15,97 @@ python -m eval.harness --systems test_only static_only zero_shot_llm full_agent 
 
 ## 1. Setup
 
-16 problems, 105 test cases, all references and alternatives passing. Mutation
-operators are applied per *site*, so one problem yields several distinct mutants
-per misconception.
+24 problems, 167 test cases, every reference and every alternative passing.
+Mutation operators are applied per *site*, so one problem yields several distinct
+mutants per misconception.
 
 | Generation outcome | Count |
 |---|---|
-| Mutants kept | 163 |
-| Discarded as equivalent (passed the whole suite) | 10 |
+| Mutants kept | 263 |
+| Discarded as equivalent (passed the whole suite) | 21 |
 | Discarded for failing the static gate | 0 |
 | Discarded broken OK/ALT variants | 0 |
-| Correct variants subsampled away to hold OK+ALT near 20% | 43 |
-| **Final dataset** | **120** |
+| Correct variants subsampled away to hold OK+ALT near 20% | 84 |
+| **Final dataset** | **179** |
 
-Label distribution (OK+ALT = 24, **20.0%**):
+Label distribution (OK+ALT = 36, **20.1%**):
 
-| CMP | OK | EDGE | OBO | DIV | ACC | REC | ALI | SCP | MUT | ALT | CONV | LOOP | TYPE |
+| CMP | ALT | EDGE | DIV | OBO | ACC | OK | REC | LOOP | SCP | ALI | CONV | MUT | TYPE |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 29 | 21 | 13 | 13 | 11 | 8 | 4 | 4 | 4 | 3 | 3 | 3 | 3 | 1 |
+| 45 | 24 | 17 | 16 | 13 | 12 | 12 | 7 | 7 | 6 | 6 | 5 | 5 | 4 |
+
+Every class now has at least four examples, against a previous minimum of one.
+That matters more than the headline count: the earlier report could not quote
+per-class numbers at all.
 
 Execution: Docker 29.7.2, `python:3.12-slim`, `--network none`, 256 MB, 1 CPU,
 64 PIDs, 5 s per test case, no host mounts (files streamed in as a tar).
 
 ## 2. Baselines
 
-All four run on the same 120 items, the two LLM systems on the same model.
+All four run on the same 179 items, the two LLM systems on the same model.
 
 | System | Band acc | Band dist | Score err | Macro-F1 | FP on OK/ALT | Acc@70% | ECE | Deferred |
 |---|---|---|---|---|---|---|---|---|
-| Test-only | 1.000 † | 0.000 | 0.017 | 0.100 | 0.000 | 1.000 | 0.332 | 0 |
-| Static-analysis only | 0.475 | 1.167 | 0.229 | 0.021 | 0.000 | 0.488 | 0.275 | 0 |
-| Zero-shot LLM | 0.458 | 0.808 | 0.147 | 0.472 | **0.125** | 0.500 | 0.520 | 0 |
-| **Full agent** | **0.892** | 0.108 | **0.020** | **0.932** | **0.000** | **0.917** | **0.107** | 15/120 |
+| Test-only | 0.972 † | 0.028 | 0.012 | 0.070 | 0.000 | 1.000 | 0.313 | 0 |
+| Static-analysis only | 0.480 | 1.084 | 0.215 | 0.009 | 0.000 | 0.437 | 0.280 | 0 |
+| Zero-shot LLM | 0.469 | 0.777 | 0.144 | 0.438 | **0.167** | 0.540 | 0.507 | 0 |
+| **Full agent** | **0.894** | 0.106 | **0.020** | **0.933** | 0.056 | 0.889 | **0.105** | 26/179 |
 | Human (Menagerie) | — | — | — | — | — | — | — | — |
 
-† Tautological — see §3. Human reference: 1.79 bands of self-disagreement,
+† Near-tautological — see §3. Human reference: 1.79 bands of self-disagreement,
 inter-rater α = 0.22 (Messer et al. 2025).
 
 **The pipeline is worth roughly double the prompt.** Same model, same items:
-macro-F1 goes 0.472 → **0.932**, and the false-positive rate on correct
-submissions goes 0.125 → **0.000**. That is the project's central question
+macro-F1 goes 0.438 → **0.933**, and the false-positive rate on correct
+submissions goes 0.167 → **0.056**. That is the project's central question
 answered — the sandbox, the evidence isolation, and the deterministic split
 account for the gap, because nothing else differs between those two rows.
 
-The zero-shot row also shows *how* it fails, which matters more than the
-aggregate: it mislabelled 12 of 29 `CMP` submissions as `EDGE`, and it graded
-one in eight correct submissions as buggy. A grader that penalises 12.5% of
-working student code is not deployable at any accuracy.
+**Macro-F1 held under a 49% larger dataset**: 0.932 on 120 items, 0.933 on 179,
+with every class now at n ≥ 4 instead of a minimum of 1. That stability is worth
+more than the number itself — it is the difference between a headline and a
+coincidence.
 
-Cost, on the free tier: 120 submissions used 184,641 input and 13,295 output
-tokens, about ₹2 at list price, with zero schema-validation retries and zero
-rejected evidence spans across 240 calls.
+Cost, on the free tier: the 179-item sweep used 123,955 input and 8,308 output
+tokens across 75 live calls (104 were already cached), with zero
+schema-validation retries and zero rejected evidence spans.
 
-## 3. The headline number is a tautology, and that is the finding
+## 3. The near-tautology in band accuracy
 
-**Test-only scores 1.000 band accuracy, and this measures nothing.**
+**Test-only scores 0.972 band accuracy, and that number is mostly an artifact.**
 
-Ground truth is derived by rule from the applied mutation — which means the
-correctness component of the ground-truth score is computed from the sandbox
-test results. The test-only baseline reads *the same* test results. Verified
-directly: for **every submission in the set** the correctness input to the
-baseline is identical to the correctness input to the ground truth. Correctness carries
+Ground truth is derived by rule from the applied mutation, which means the
+correctness component of the ground-truth score is computed from the sandbox test
+results. The test-only baseline reads *the same* test results. Correctness carries
 60% of the rubric weight and the band ladder is 15 points wide, so any system
-that runs the tests lands in the right band every time.
+that runs the tests lands in the right band nearly every time.
 
-This is a property of the evaluation design, not a strength of the baseline, and
-it invalidates band accuracy as a discriminating metric on synthetic data. It is
-recorded here rather than quietly dropped because reporting 100% without this
+This is a property of the evaluation design, not a strength of the baseline. It
+is recorded rather than quietly dropped, because reporting it without this
 paragraph would be the single most misleading number the project could publish.
+
+On the earlier 120-item set this figure was exactly 1.000. It fell to 0.972 only
+because the set now contains 24 `ALT` submissions instead of 3, and correct-but-
+different code is precisely where a tests-only view misprices: it assumes full
+marks for style and documentation, which those submissions do not always earn.
+The residual 2.8% *is* the signal, and it took more data to see it at all.
 
 The metrics that do discriminate:
 
 - **Score error, split by label.** Test-only is off by 0.003 on buggy
-  submissions but **0.072 on OK/ALT** — over 20× worse. That gap is exactly the
-  style and documentation degradation that tests cannot see, and it is the
-  first evidence that a tests-only grader systematically misprices
-  correct-but-scruffy work.
-- **Macro-F1 = 0.100.** Tests can say *that* a submission failed, never *which*
+  submissions but far more on OK/ALT — the style and documentation degradation
+  tests cannot see, and the first evidence that a tests-only grader
+  systematically misprices correct-but-scruffy work.
+- **Macro-F1 = 0.070.** Tests can say *that* a submission failed, never *which*
   misconception caused it. This is the number the agent has to beat, and it is
   the whole educational case for the project.
 
 **A zero false-positive rate can be bought by refusing to diagnose.** Both
-baselines score 0.000 on OK/ALT: test-only because correct code passes its
-tests, static-only because it labels everything `OK`. Static-only pairs that
-perfect score with a macro-F1 of 0.021. The false-positive rate is only
-meaningful read alongside F1, and future results must report them together.
+deterministic baselines score 0.000 on OK/ALT: test-only because correct code
+passes its tests, static-only because it labels everything `OK`. Static-only
+pairs that perfect score with a macro-F1 of 0.009. The false-positive rate is
+only meaningful read alongside F1, and results must always report them together.
 
 ## 4. C1 — Consistency
 
@@ -132,52 +139,79 @@ false-positive rate 0.000, ECE 0.067, deferring 13.3%.
 
 ## 5. C2 — Diagnosis
 
-Macro-F1 **0.932** for the full agent, against 0.472 zero-shot, 0.100 test-only
-and 0.021 static-only. Per class, full agent:
+Macro-F1 **0.933** for the full agent, against 0.438 zero-shot, 0.070 test-only
+and 0.009 static-only. Per class, full agent, on 179 items:
 
 | Label | P | R | F1 | n | | Label | P | R | F1 | n |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ACC | 1.00 | 0.75 | 0.86 | 8 | | LOOP | 0.50 | 1.00 | 0.67 | 3 |
-| ALI | 1.00 | 1.00 | 1.00 | 4 | | MUT | 1.00 | 1.00 | 1.00 | 3 |
-| ALT | 1.00 | 1.00 | 1.00 | 3 | | OBO | 0.86 | 0.92 | 0.89 | 13 |
-| CMP | 1.00 | 0.86 | 0.93 | 29 | | OK | 1.00 | 1.00 | 1.00 | 21 |
-| CONV | 1.00 | 1.00 | 1.00 | 3 | | REC | 0.67 | 1.00 | 0.80 | 4 |
-| DIV | 1.00 | 0.91 | 0.95 | 11 | | SCP | 1.00 | 1.00 | 1.00 | 4 |
-| EDGE | 0.93 | 1.00 | 0.96 | 13 | | TYPE | 1.00 | 1.00 | 1.00 | 1 |
+| CMP | 1.00 | 0.87 | 0.93 | 45 | | ACC | 1.00 | 0.83 | 0.91 | 12 |
+| ALT | 1.00 | 0.92 | 0.96 | 24 | | OK | 1.00 | 1.00 | 1.00 | 12 |
+| EDGE | 0.94 | 1.00 | 0.97 | 17 | | REC | 0.70 | 1.00 | 0.82 | 7 |
+| DIV | 1.00 | 0.94 | 0.97 | 16 | | LOOP | 0.64 | 1.00 | 0.78 | 7 |
+| OBO | 0.86 | 0.92 | 0.89 | 13 | | SCP | 1.00 | 1.00 | 1.00 | 6 |
+| ALI | 1.00 | 1.00 | 1.00 | 6 | | CONV | 1.00 | 1.00 | 1.00 | 5 |
+| MUT | 0.71 | 1.00 | 0.83 | 5 | | TYPE | 1.00 | 1.00 | 1.00 | 4 |
 
-**The weak classes are the small ones, and that is a caveat, not a result.**
-`LOOP` (0.67) and `REC` (0.80) have three and four examples; their precision is
-dragged by two or three misroutes each, which at that support is noise. `TYPE`,
-`CONV`, `MUT` and `ALT` score 1.00 on one to three items apiece and should not
-be quoted at all. Only `CMP` (29), `OBO` (13), `EDGE` (13), `DIV` (11) and `OK`
-(21) have enough support to mean much, and those five sit between 0.89 and 1.00.
+Recall is at or near 1.00 almost everywhere; the losses are in **precision** on
+`LOOP` (0.64), `MUT` (0.71) and `REC` (0.70). The agent over-applies those three
+labels rather than missing them, and the source is consistent: `CMP → REC` three
+times and `CMP → LOOP` three times. A wrong comparison operator and a missing
+base case both present as non-termination, and the agent is choosing between
+them on evidence that genuinely underdetermines the answer.
 
-The residual confusions are the plausible ones: `CMP → REC` and `CMP → LOOP`
-twice each, `ACC → OBO` and `ACC → LOOP` once each. A wrong comparison operator
-and a missing base case can produce identical symptoms — non-termination — and
-the agent is choosing between them on evidence that genuinely underdetermines
-the answer.
+`TYPE`, `CONV`, `MUT`, `SCP` and `ALI` now sit at 4–6 examples rather than 1–4.
+That is enough to stop them being pure noise, not enough to quote a per-class
+figure with confidence. The five largest classes — `CMP` (45), `ALT` (24),
+`EDGE` (17), `DIV` (16), `OBO` (13) — carry the macro number and sit at 0.89–0.97.
 
-The `OK` column is the one to watch: **21/21 correct submissions identified as
-correct, precision and recall both 1.00**, versus zero-shot's 0.75 F1 and 12.5%
-false-positive rate on the same items.
+## 5a. The false-positive rate was underpowered, and it is not zero
+
+**This is the most important result of this phase.** On 120 items with 3 `ALT`
+submissions, the agent's false-positive rate on correct code was **0.000**. On
+179 items with 24 `ALT` submissions it is **0.056** — two of 36 correct
+submissions graded as buggy.
+
+Both failures are the same one, and it is a sharp one:
+
+> `word_frequency::alt` and `inventory_tally::alt`, both labelled **MUT**.
+> *"The function signature includes a mutable default argument `counts=None`, but
+> the implementation assigns `result = {} if counts is None else counts`. If a
+> caller passes a dictionary to `counts`, the function will mutate it."*
+
+`counts=None` is **not** a mutable default — it is the idiom that exists to avoid
+one. The agent flagged the defensive pattern as the antipattern it prevents. Note
+also what it got right: the function *does* mutate a caller-supplied dictionary,
+which is true and is true of the reference too. The observation is defensible;
+the label is wrong.
+
+The discriminating detail: the reference solutions spell the guard as
+`if counts is None: counts = {}` and are never flagged, while the alternatives
+spell it as a conditional expression and are. **An unconventional but equivalent
+spelling of a correct idiom drew a penalty that the conventional spelling did
+not** — which is exactly the bias against unusual-but-correct work that `ALT`
+exists to detect, and exactly what the literature calls the hawk effect in human
+graders.
+
+It would have stayed invisible at n=3. The zero-shot baseline degrades the same
+way and worse, from 0.125 to **0.167** on the same expanded set.
 
 ## 6. C3 — Calibration
 
-Full agent: accuracy at 70% coverage **0.917**, ECE **0.107**, deferring 15 of
-120 (12.5%). Every deferral came from the band-edge rule; no submission was
+Full agent: accuracy at 70% coverage **0.889**, ECE **0.105**, deferring 26 of
+179 (14.5%). Every deferral came from the band-edge rule; no submission was
 deferred for low confidence or, with a single sample, for disagreement.
 
 That last point is a limitation of this run rather than of the design. At
 `n_samples=1` the disagreement signal cannot fire at all, so C3 here is measured
 with one of routing's three inputs disabled. The `band_margin` was also
-recalibrated mid-phase, from 0.05 to 0.02: at 0.05 the rule deferred 70% of the
-set on its own, because with five bands it makes half the score range "near an
-edge" and swamps the signals routing exists for.
+recalibrated earlier, from 0.05 to 0.02: at 0.05 the rule deferred 70% of the set
+on its own, because with five bands it makes half the score range "near an edge"
+and swamps the signals routing exists for.
 
-ECE 0.332 for test-only is real and reflects deliberate under-confidence: its
-confidence is `|2·pass_fraction − 1|`, so a submission failing half its tests
-reports low confidence while still landing in the right band.
+The risk–coverage curve (§7c) is nearly flat, which is the honest reading of C3
+on this data: the agent is not separating cases it gets right from cases it gets
+wrong, because it gets almost all of them right. Selective grading has little to
+buy here and would need harder data to demonstrate.
 
 ## 6a. Cross-model frontier
 
@@ -220,6 +254,10 @@ Two caveats that stop this from being a clean comparison:
   Both runs were free on the tier that served them.
 
 ## 7. C4 — Robustness
+
+**Measured on the earlier 120-item set**, before the dataset was expanded to
+179; the attacked submissions came from the same generator and the comparison is
+internal to the arms, so the result stands, but it has not been re-run.
 
 10 buggy submissions × 8 injection families × 3 architectures = 240 attacked
 gradings, each paired with a clean control of the same submission on the same
@@ -351,68 +389,69 @@ fix. Whether that is *pedagogically* good is not something these numbers answer;
 | | Full agent | Zero-shot |
 |---|---|---|
 | Calls per submission | 1 | 1 |
-| Mean tokens per submission | 1,636 | 953 |
-| Cost per submission (list price) | ₹0.017 | ₹0.010 |
-| Cost for the 120-item set | **₹2.05** | ₹1.19 |
+| Mean tokens per submission | ~1,650 | ~1,000 |
 | Schema retries / invalid spans | 0 / 0 | 0 / — |
-| Wall clock, 120 items | 600 s | 602 s |
+| Wall clock, 179 items | 383 s | 380 s |
 
 Wall clock is rate-limiter-bound, not model-bound: the free tier allows 15
-requests/minute and the config paces at 12, so 120 submissions take ten minutes
-regardless of how fast the model answers. The run cost nothing — it fits inside
-the free tier — and ₹2.05 is what it would cost at list price.
-
-## 7c. Figures
-
-Regenerate with `python -m eval.figures` (no model calls, reads
-`results/runs.jsonl`). All four are pinned to `gemini-3.1-flash-lite`.
-
-| Figure | What it shows |
-|---|---|
-| `figures/risk_coverage.png` | The full agent's curve is flat near 0.92 from 10% to 100% coverage; zero-shot decays to 0.46. A flat curve means confidence is *not* separating right from wrong — the agent is simply accurate everywhere, so selective grading buys little on this data. |
-| `figures/per_class_f1.png` | Full agent vs zero-shot per class, ordered by support, with n printed on each label so the thin classes cannot be read as results. |
-| `figures/confusion_matrix.png` | A clean diagonal. The off-diagonal mass is `CMP`→`EDGE` (2) and `CMP`→`LOOP` (2), which share the non-termination symptom. |
-| `figures/false_positive_rate.png` | The headline safety number: 12.5% for zero-shot, 0.0% for everything else. |
-
-The flat risk–coverage curve is worth stating plainly rather than presenting as a
-success: the C3 claim was meant to be "the agent knows when it doesn't know", and
-this data cannot demonstrate that, because the agent is nearly always right. A
-harder dataset — real submissions — is where deferral would earn its place.
+requests/minute and the config paces at 12, so a sweep takes as long as its
+uncached call count divides by that. Both runs above were free on the tier that
+served them; the per-token prices in the config are unverified for these preview
+models, so no rupee figure is quoted as a measurement.
 
 ## 8. Limitations
 
-1. **The set is 120 submissions, against a target of 300.** Yield is ~10 kept
-   mutants per problem, so the target needs roughly 24 problems; there are 16.
-   Nothing else has to change — adding problems is mechanical.
-2. **TYPE has a single example**, and MUT/LOOP/ALT/CONV have three each.
-   Macro-F1 over classes that thin is high-variance, and the per-class numbers
-   should not be quoted until each class has ~10 examples. The scarce codes are
-   scarce for a structural reason: `TYPE` needs an explicit numeric conversion
-   and `CONV` needs an iterative solver, and few intro problems have either.
-3. **Design scores carry no signal.** Every ground-truth design sub-score is
-   1.0, because a wrong loop bound is an implementation defect, not a design
-   one. The 15% design weight is therefore untested by this dataset, which
-   matters because design is exactly the criterion S4 will own.
-4. **Band accuracy is not usable on synthetic data** for any system that runs
-   the tests (§3). Real data with independent human grades — Menagerie — is the
-   only way to test banding honestly.
-5. **Latency figures are meaningless here.** Sandbox results are cached from
-   generation, so the baseline "graded" 116 submissions in under 0.1 s. Cold
-   figures need a cache-cleared run.
+1. **179 submissions against a target of 300, and the earlier estimate of what
+   that needs was wrong.** The previous report reasoned "~10 kept mutants per
+   problem, so 24 problems closes it". Measured over 24 problems: 263 mutants
+   kept, but 143 survive as *buggy* after the OK/ALT subsample — about **6 buggy
+   mutants per problem**, not 10. Reaching 300 needs roughly 40 problems, not 24.
+   The work is mechanical but it is 16 more problems, not 8.
+2. **The smallest classes are still small.** `TYPE` (4), `MUT` (5) and `CONV` (5)
+   are enough to stop being noise, not enough to quote per-class. `CMP` at 45 is
+   a quarter of the set, which is why macro-F1 rather than accuracy is the
+   headline.
+3. **Design scores carry no signal.** Every ground-truth design sub-score is 1.0,
+   because a wrong loop bound is an implementation defect, not a design one. The
+   15% design weight is therefore untested by this dataset — and design is
+   exactly the criterion S4 owns.
+4. **Band accuracy is nearly unusable on synthetic data** for any system that
+   runs the tests (§3). Real data with independent human grades — Menagerie — is
+   the only way to test banding honestly.
+5. **Latency figures are rate-limiter-bound**, not model-bound, and sandbox
+   results are cached from generation. Neither number describes throughput.
 6. **Synthetic mutants are clean.** The realism layer (LLM rewriting in a
    struggling-student voice) is not built, so the gap to real submissions is
    unmeasured.
-7. **Two models, one temperature, one sample.** Everything above is at
-   temperature 0 with `n_samples=1`, on two closely-related Gemini lite models
-   (§6a). A frontier spanning a genuinely different family — Llama, Qwen, a local
-   7B — is unmeasured, and that is where a cost/accuracy trade-off would actually
-   appear; the two models here differ by 0.02 macro-F1 and cost the same.
+7. **Two models, one temperature, one sample.** Everything is at temperature 0
+   with `n_samples=1`, on two closely-related Gemini lite models (§6a). A frontier
+   spanning a genuinely different family is unmeasured, and that is where a
+   cost/accuracy trade-off would actually appear.
 8. **The agent has seen the reference solution.** S3 hands the model the correct
    implementation as trusted context, and every mutant is a small edit to it, so
    diagnosis is partly a diff-reading task. Real submissions do not resemble the
-   reference that closely, and macro-F1 0.932 should be expected to fall on real
-   data. This is the single biggest threat to the headline number.
-9. **Free-tier quota is the binding constraint on this key.** The 2.5-series
-   models allow 20 requests/day, the 3.x lite models 500/day at 15/minute.
-   A full sweep plus its zero-shot control plus a three-pass consistency run is
-   ~420 calls, which fits in one day only just, and only on a 3.x model.
+   reference that closely, and macro-F1 0.933 should be expected to fall on real
+   data. This remains the single biggest threat to the headline number.
+9. **C4 was measured on the earlier 120-item set** (§7) and has not been re-run
+   against the expanded one.
+10. **Free-tier quota is the binding constraint.** The 2.5-series models allow 20
+    requests/day, the 3.x lite models 500/day at 15/minute. A full sweep, its
+    zero-shot control and a three-pass consistency run is ~420 calls, which fits
+    in one day only just, and only on a 3.x model.
+
+## 9. What changed since the 120-item report
+
+| | 120 items | 179 items |
+|---|---|---|
+| Full agent macro-F1 | 0.932 | **0.933** |
+| Full agent FP on correct code | 0.000 | **0.056** |
+| Zero-shot macro-F1 | 0.472 | 0.438 |
+| Zero-shot FP on correct code | 0.125 | **0.167** |
+| Test-only band accuracy | 1.000 | 0.972 |
+| Smallest class | 1 (`TYPE`) | 4 (`TYPE`) |
+
+The headline diagnosis number is stable to three decimal places under a 49%
+larger, better-balanced set — good evidence it was not a small-sample artifact.
+The safety number was not stable, and moved in the direction that matters: the
+0.000 false-positive rate was a consequence of having three `ALT` examples, and
+the real figure is 0.056 (§5a).

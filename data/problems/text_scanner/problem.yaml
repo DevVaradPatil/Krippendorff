@@ -1,0 +1,14 @@
+id: text_scanner
+title: Scan text for runs and vowels
+tags: [strings, accumulators, scope]
+
+statement: |
+  `count_vowels(text)` returns how many of a e i o u appear in the text, ignoring
+  case.
+
+  `longest_run(text)` returns the length of the longest run of one repeated
+  character, and 0 for empty text.
+
+  Both must give the same answer every time they are called with the same input.
+
+misconceptions_applicable: [SCP, ACC, CMP, LOOP, OK, ALT]

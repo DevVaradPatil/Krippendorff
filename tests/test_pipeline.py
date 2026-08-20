@@ -53,7 +53,12 @@ def _stub(monkeypatch, labels, design=1.0, confidence=0.9, span=(1, 2)):
 def test_agreement_auto_grades_and_scores_from_the_right_stages(monkeypatch, case):
     submission, problem = case
     _stub(monkeypatch, [Misconception.OBO] * 3, design=1.0)
-    result = pipeline.grade(submission, problem, CONFIG, use_cache=False)
+    # band_margin disabled: this test is about the *agreement* path, and whether
+    # the chosen submission happens to score near a band edge depends on which
+    # mutant the dataset yields first. The edge rule has its own test.
+    result = pipeline.grade(
+        submission, problem, CONFIG, policy=RoutingPolicy(band_margin=0.0), use_cache=False
+    )
 
     assert result.route is Route.AUTO
     assert result.diagnosis.label is Misconception.OBO
@@ -102,7 +107,9 @@ def test_a_hallucinated_span_defers_rather_than_grading(monkeypatch, case):
 def test_low_confidence_defers(monkeypatch, case):
     submission, problem = case
     _stub(monkeypatch, [Misconception.OBO] * 3, confidence=0.1)
-    result = pipeline.grade(submission, problem, CONFIG, use_cache=False)
+    result = pipeline.grade(
+        submission, problem, CONFIG, policy=RoutingPolicy(band_margin=0.0), use_cache=False
+    )
     assert result.route is Route.HUMAN_REVIEW
     assert "confidence" in result.route_reason
 

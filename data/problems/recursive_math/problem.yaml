@@ -1,0 +1,13 @@
+id: recursive_math
+title: Recursive power and digit sum
+tags: [recursion, base-case, number-theory]
+
+statement: |
+  `power(base, exponent)` returns base raised to a non-negative integer
+  exponent, by squaring: compute the result for half the exponent and square it.
+  Raise `ValueError` for a negative exponent.
+
+  `sum_digits(n)` returns the sum of the decimal digits of a non-negative
+  integer, recursively. Raise `ValueError` for negative input.
+
+misconceptions_applicable: [REC, EDGE, CMP, OK, ALT]

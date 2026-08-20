@@ -1,152 +1,152 @@
 [
  {
-  "submission_id": "newton_sqrt::div_floor#2",
-  "true_label": "DIV",
-  "diagnosed": "DIV",
+  "submission_id": "running_stats::scp_global_accumulator#0",
+  "true_label": "SCP",
+  "diagnosed": "SCP",
   "used_template": false,
   "overlap_ratio": 0.0,
   "verbatim_lines": [],
   "leaked": false,
-  "feedback": "On line 12, you are calculating the next guess using the expression (guess + x // guess) / 2.0.\n\nHow does the behavior of the // operator differ from the / operator when dealing with non-integer results, and could that difference affect the precision of your 'better' guess?\n\nTry printing the value of 'better' inside the loop for a non-integer input like 2.0 to see if the values are behaving as you expect."
+  "feedback": "In lines 9 through 11, you are using a global variable named 'total' to accumulate the sum of the input values within the 'mean' function.\n\nWhen the 'mean' function finishes executing and returns a value, what happens to the current value stored in the global 'total' variable, and how might that affect the next time 'mean' is called?\n\nConsider where you could define and initialize a variable so that it only exists for the duration of a single function call, rather than persisting across multiple calls."
  },
  {
-  "submission_id": "gcd_euclid::edge_guard_removed#0",
-  "true_label": "EDGE",
-  "diagnosed": "EDGE",
-  "used_template": false,
-  "overlap_ratio": 0.0,
-  "verbatim_lines": [],
-  "leaked": false,
-  "feedback": "In lines 4 through 9, your gcd function processes the inputs using recursion, but it does not check the values of 'a' or 'b' before beginning the calculation.\n\nHow does your current implementation behave if a negative integer is passed as an argument, and where in the function could you verify that the inputs meet the required criteria?\n\nConsider what specific condition needs to be checked at the very beginning of the function to ensure that negative inputs are handled as requested."
- },
- {
-  "submission_id": "sieve_primes::obo_range_bound#1",
+  "submission_id": "matrix_multiply::obo_range_bound#2",
   "true_label": "OBO",
   "diagnosed": "OBO",
   "used_template": false,
   "overlap_ratio": 0.0,
   "verbatim_lines": [],
   "leaked": false,
-  "feedback": "On line 16, you are using the range function to iterate through multiples of p, starting from p squared and ending before n.\n\nIf n is a prime number, does the range function on line 16 include n itself as a potential multiple to be marked as False?\n\nConsider how the stop argument in the range function behaves and whether it includes or excludes the value provided when determining the bounds of your loop."
+  "feedback": "In line 14, you initialize the result matrix using 'range(rows - 1)', while the nested loops starting on line 15 iterate through 'range(rows)'.\n\nIf the outer loop on line 15 is intended to process every row of the matrix, how many rows does your initialization in line 14 actually provide?\n\nConsider tracing the value of 'result' when 'rows' is 3, and compare the number of sub-lists created in line 14 to the number of times the loop in line 15 executes."
  },
  {
-  "submission_id": "fibonacci_memo::cmp_operator_swap#1",
+  "submission_id": "binary_search::acc_init_one#0",
+  "true_label": "ACC",
+  "diagnosed": "OBO",
+  "used_template": false,
+  "overlap_ratio": 0.0,
+  "verbatim_lines": [],
+  "leaked": false,
+  "feedback": "On line 6, you have initialized the lower bound of your search range to 1.\n\nIf a list contains a target at index 0, how does your current initialization of 'lo' affect the algorithm's ability to check that specific position?\n\nConsider the range of valid indices in a Python list and trace the execution of your loop when the target is located at the very beginning of the input list."
+ },
+ {
+  "submission_id": "fixed_point_iteration::edge_guard_removed#0",
+  "true_label": "EDGE",
+  "diagnosed": "EDGE",
+  "used_template": false,
+  "overlap_ratio": 0.0,
+  "verbatim_lines": [],
+  "leaked": false,
+  "feedback": "In lines 18-19, you have implemented a specific check for when 'a' is zero, but the function proceeds directly to line 20 for all other values of 'a'.\n\nHow does your current implementation handle cases where 'a' is a negative number, and what happens when that value is passed into the lambda function on line 20?\n\nConsider what condition should be checked before line 20 to ensure the function behaves correctly for negative inputs as specified."
+ },
+ {
+  "submission_id": "bisection_root::conv_fixed_iterations#0",
+  "true_label": "CONV",
+  "diagnosed": "CONV",
+  "used_template": false,
+  "overlap_ratio": 0.0,
+  "verbatim_lines": [],
+  "leaked": false,
+  "feedback": "On line 8, your loop is configured to run exactly three times regardless of the input parameters.\n\nHow does the number of iterations in your loop relate to the 'max_iter' parameter provided in the function definition, and will three iterations be sufficient to reach the 'tol' threshold for all possible intervals?\n\nConsider how you might structure your loop to continue until either the interval width is smaller than 'tol' or the number of iterations reaches 'max_iter'."
+ },
+ {
+  "submission_id": "secant_root::cmp_operator_swap#0",
   "true_label": "CMP",
   "diagnosed": "CMP",
   "used_template": false,
   "overlap_ratio": 0.0,
   "verbatim_lines": [],
   "leaked": false,
-  "feedback": "On line 11, you have implemented a conditional check that triggers when n is not equal to 0.\n\nIf you call the function with n=1, what value does the condition on line 11 return, and how does that affect the subsequent logic for n=1 on line 13?\n\nTrace the execution flow for n=1 and consider whether the condition on line 11 is correctly identifying the base case for the Fibonacci sequence."
+  "feedback": "In lines 6-7, you have implemented a check that raises a ValueError if x0 is not equal to x1.\n\nIf the function is intended to proceed only when the starting points are different, what happens to the logic when x0 and x1 are actually distinct values?\n\nConsider what the condition in line 6 should evaluate to when you want the function to continue, and compare that to the current behavior of the inequality operator."
  },
  {
-  "submission_id": "running_stats::edge_guard_removed#1",
+  "submission_id": "text_scanner::acc_init_one#0",
+  "true_label": "ACC",
+  "diagnosed": "ACC",
+  "used_template": false,
+  "overlap_ratio": 0.0,
+  "verbatim_lines": [],
+  "leaked": false,
+  "feedback": "On line 8, you initialize the variable 'total' to 1 before the loop begins processing the characters in the text.\n\nIf the input text is empty, what value will the function return, and does that match the expected count of vowels in an empty string?\n\nConsider what the starting value of an accumulator should be when you are counting items from scratch."
+ },
+ {
+  "submission_id": "student_records::edge_guard_removed#0",
   "true_label": "EDGE",
   "diagnosed": "EDGE",
   "used_template": false,
   "overlap_ratio": 0.0,
   "verbatim_lines": [],
   "leaked": false,
-  "feedback": "In lines 14-21, your variance function calculates the sum of squared deviations and divides the result by (len(values) - 1).\n\nWhat happens to the calculation in line 21 if the input sequence contains only one element, and how does that result compare to the requirement for handling sequences with fewer than two values?\n\nConsider how you might verify the length of the input sequence at the start of the function to ensure it meets the necessary criteria before proceeding with the calculation."
+  "feedback": "In lines 6 through 8, your code splits the input string into a list and immediately attempts to access indices 0, 1, and 2 to construct the return tuple.\n\nWhat happens to the execution flow on line 8 if the input string contains fewer than three comma-separated values?\n\nConsider how you might verify the length of the 'parts' list before attempting to access those specific indices, and how you could trigger a ValueError if that length is not exactly three."
  },
  {
-  "submission_id": "newton_sqrt::edge_guard_removed#0",
-  "true_label": "EDGE",
-  "diagnosed": "EDGE",
-  "used_template": false,
-  "overlap_ratio": 0.0,
-  "verbatim_lines": [],
-  "leaked": false,
-  "feedback": "Your function currently handles the case where x is 0 on lines 6-7, but it proceeds directly to line 8 for all other values of x.\n\nHow does your code distinguish between a valid positive number and a negative number before it reaches the calculation on line 8?\n\nConsider what condition you could add to your logic to identify negative inputs and handle them as specified before the calculation begins."
- },
- {
-  "submission_id": "matrix_multiply::edge_guard_removed#1",
-  "true_label": "EDGE",
-  "diagnosed": "EDGE",
-  "used_template": false,
-  "overlap_ratio": 0.0,
-  "verbatim_lines": [],
-  "leaked": false,
-  "feedback": "In lines 8 through 10, you define the dimensions of the matrices based on the input lists, but the code proceeds directly to calculations without verifying if the number of columns in 'a' matches the number of rows in 'b'.\n\nHow does your current implementation ensure that the inner dimensions are compatible before attempting to access indices in the nested loops?\n\nConsider what condition must be true for matrix multiplication to be mathematically valid and where in your function you could check this condition to raise a ValueError if it is not met."
- },
- {
-  "submission_id": "matrix_multiply::cmp_operator_swap#2",
+  "submission_id": "matrix_multiply::cmp_operator_swap#1",
   "true_label": "CMP",
   "diagnosed": "CMP",
   "used_template": false,
   "overlap_ratio": 0.0,
   "verbatim_lines": [],
   "leaked": false,
-  "feedback": "On line 6, your code checks if the length of matrix 'b' is not equal to zero to determine if the function should return an empty list.\n\nIf you pass two standard, non-empty matrices into the function, what does the condition 'len(b) != 0' evaluate to, and how does that affect the execution flow on line 7?\n\nConsider what specific condition should trigger an early return of an empty list, and re-evaluate whether your current comparison operator correctly identifies that state."
+  "feedback": "On line 6, your conditional check uses 'len(a) != 0' to determine if the function should return an empty list.\n\nIf you pass a non-empty matrix into the function, how does the condition 'len(a) != 0' evaluate, and what does that mean for the execution flow on line 7?\n\nTrace the logic of your conditional statement using a simple 1x1 matrix as input to see if the function proceeds as you expect."
  },
  {
-  "submission_id": "gcd_euclid::rec_missing_base_case#0",
+  "submission_id": "running_stats::edge_guard_removed#0",
+  "true_label": "EDGE",
+  "diagnosed": "EDGE",
+  "used_template": false,
+  "overlap_ratio": 0.0,
+  "verbatim_lines": [],
+  "leaked": false,
+  "feedback": "In the mean function, lines 4 through 9 calculate the average by dividing the total sum by the length of the input sequence.\n\nWhat happens to the calculation on line 9 when the input sequence is empty, given that the length of an empty sequence is zero?\n\nConsider how you might check the length of the input at the start of the function to ensure it meets the requirements before performing the division."
+ },
+ {
+  "submission_id": "running_stats::obo_range_bound#0",
+  "true_label": "OBO",
+  "diagnosed": "OBO",
+  "used_template": false,
+  "overlap_ratio": 0.0,
+  "verbatim_lines": [],
+  "leaked": false,
+  "feedback": "In line 23, you are calculating the variance by dividing the sum of squared deviations by the total count of elements in the sequence.\n\nThe problem specification requires the sample variance, which uses a specific divisor related to the sample size; does your divisor in line 23 match the formula for sample variance?\n\nReview the mathematical definition of sample variance versus population variance and consider how the denominator should be adjusted to account for the sample size n."
+ },
+ {
+  "submission_id": "shopping_cart::cmp_operator_swap#0",
+  "true_label": "CMP",
+  "diagnosed": "CMP",
+  "used_template": false,
+  "overlap_ratio": 0.0,
+  "verbatim_lines": [],
+  "leaked": false,
+  "feedback": "In line 19, you are using the condition 'if quantity >= 0' to decide whether to skip a value in the list.\n\nIf a quantity is exactly 0, does your current logic treat it as a valid quantity or as a problem to be collected?\n\nConsider how the comparison operator on line 19 affects the inclusion of zero, and check if that matches the requirement for strictly positive values."
+ },
+ {
+  "submission_id": "fibonacci_memo::rec_missing_base_case#1",
   "true_label": "REC",
   "diagnosed": "REC",
   "used_template": false,
   "overlap_ratio": 0.0,
   "verbatim_lines": [],
   "leaked": false,
-  "feedback": "On line 9, your function calls itself recursively using the modulo operator with 'b' as the divisor.\n\nWhat happens to the execution of line 9 when 'b' reaches zero, and is there a condition that should be checked before performing that modulo operation?\n\nConsider how Euclid's algorithm defines the base case for the recursion and what value should be returned when 'b' is zero."
+  "feedback": "In lines 11-12, you have defined a base case for when n is 0, which allows the recursion to stop for that specific input.\n\nWhen the function is called with n=1, what value does it return, and how does the logic on line 15 proceed from there?\n\nTrace the execution flow for n=1 and consider what specific condition is required to stop the recursion before it reaches negative values."
  },
  {
-  "submission_id": "trapezoid_integration::div_floor#0",
+  "submission_id": "celsius_readings::div_floor#0",
   "true_label": "DIV",
   "diagnosed": "DIV",
   "used_template": false,
   "overlap_ratio": 0.0,
   "verbatim_lines": [],
   "leaked": false,
-  "feedback": "On line 9, you calculate the step size 'h' using the expression 'b - a // n'.\n\nHow does Python's order of operations affect the calculation of 'h', and what is the difference between the result of '//' and '/' when calculating a step size that often requires decimal precision?\n\nConsider testing the value of 'h' with a simple example where 'b - a' is not perfectly divisible by 'n' to see if the result matches your mathematical expectations."
+  "feedback": "On line 23, you are performing the Fahrenheit to Celsius conversion using the // operator.\n\nHow does the behavior of the // operator differ from the / operator when calculating a result that is not a whole number?\n\nConsider whether your conversion formula requires the precision of floating-point division or if integer truncation is appropriate for these temperature values."
  },
  {
-  "submission_id": "word_frequency::cmp_operator_swap#1",
-  "true_label": "CMP",
-  "diagnosed": "CMP",
+  "submission_id": "parse_scores::edge_guard_removed#0",
+  "true_label": "EDGE",
+  "diagnosed": "EDGE",
   "used_template": false,
   "overlap_ratio": 0.0,
   "verbatim_lines": [],
   "leaked": false,
-  "feedback": "On line 26, your code uses the >= operator to compare the current word's count against the best_count found so far while iterating through the sorted keys.\n\nWhen you encounter a word that has the exact same frequency as your current 'best' word, what happens to the 'best' variable due to that comparison?\n\nConsider how the 'best' variable would change if you only updated it when a word's count strictly exceeds the current maximum."
- },
- {
-  "submission_id": "running_stats::div_floor#0",
-  "true_label": "DIV",
-  "diagnosed": "DIV",
-  "used_template": false,
-  "overlap_ratio": 0.0,
-  "verbatim_lines": [],
-  "leaked": false,
-  "feedback": "On line 11, you are calculating the mean by dividing the total sum by the length of the sequence using the // operator.\n\nHow does the behavior of the // operator differ from the / operator when the result of a division is not a whole number, and does this impact the precision of your mean calculation?\n\nTry testing your mean function with a list like [1, 2] and observe the output compared to what you would expect mathematically."
- },
- {
-  "submission_id": "running_stats::cmp_operator_swap#1",
-  "true_label": "CMP",
-  "diagnosed": "CMP",
-  "used_template": false,
-  "overlap_ratio": 0.0,
-  "verbatim_lines": [],
-  "leaked": false,
-  "feedback": "On line 16, your code checks if the length of the input sequence is less than or equal to 2 before raising a ValueError.\n\nIf you provide a sequence with exactly two values, what does the condition on line 16 evaluate to, and is that consistent with the requirement that sample variance needs at least two values?\n\nConsider testing your function with a list of length 2 and tracing how the condition on line 16 handles that specific case."
- },
- {
-  "submission_id": "matrix_transpose::obo_range_bound#2",
-  "true_label": "OBO",
-  "diagnosed": "OBO",
-  "used_template": false,
-  "overlap_ratio": 0.0,
-  "verbatim_lines": [],
-  "leaked": false,
-  "feedback": "On line 12, you are initializing the result matrix using a list comprehension that iterates over 'range(cols - 1)'.\n\nIf the input matrix has a certain number of columns, how many rows will your result matrix contain, and does this match the number of times the inner loop on line 14 attempts to access an index?\n\nConsider what happens to the very last column of the input matrix when the loop on line 14 reaches the final index 'j' and tries to assign a value to 'result[j]'."
- },
- {
-  "submission_id": "gcd_euclid::cmp_operator_swap#2",
-  "true_label": "CMP",
-  "diagnosed": "CMP",
-  "used_template": false,
-  "overlap_ratio": 0.0,
-  "verbatim_lines": [],
-  "leaked": false,
-  "feedback": "On line 6, your code checks if 'b <= 0' to determine if a ValueError should be raised.\n\nIf the input 'b' is exactly 0, how does your check on line 6 interact with the base case you defined on line 9?\n\nConsider what happens when you call gcd(5, 0) and whether 0 should be treated as an invalid input or a valid base case for the algorithm."
+  "feedback": "On line 11, you split the string into a list called 'parts', and on line 13, you immediately attempt to access index 1 of that list.\n\nWhat happens to your code on line 13 if a line contains no commas, resulting in a list with only one element?\n\nConsider how you might verify the structure of 'parts' before attempting to access its elements to ensure it meets the requirement of having exactly two fields."
  }
 ]

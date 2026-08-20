@@ -1,0 +1,13 @@
+id: secant_root
+title: Secant method
+tags: [root-finding, convergence, floats]
+
+statement: |
+  `secant(f, x0, x1, tol=1e-12, max_iter=100)` finds a root of f by drawing a
+  line through the last two points and taking where it crosses zero: the next
+  estimate is x1 minus f(x1) times (x1 - x0) divided by (f(x1) - f(x0)).
+
+  Stop once successive estimates differ by less than `tol`. Raise `ValueError`
+  if the two starting points are equal.
+
+misconceptions_applicable: [CONV, DIV, CMP, EDGE, OK, ALT]

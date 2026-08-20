@@ -1,0 +1,15 @@
+id: celsius_readings
+title: Normalise temperature readings
+tags: [strings, type-conversion, units]
+
+statement: |
+  A reading is a string like "72.5 F" or "20 C".
+
+  `parse_reading(text)` returns the value as a float and the unit as an
+  uppercase letter, raising `ValueError` if the text is not exactly a value and
+  a unit separated by whitespace.
+
+  `to_celsius(readings)` converts a list of readings to Celsius floats, skipping
+  blank entries. Fahrenheit converts as (value - 32) * 5 / 9.
+
+misconceptions_applicable: [TYPE, LOOP, CMP, DIV, EDGE, OK, ALT]

@@ -1,0 +1,14 @@
+id: fixed_point_iteration
+title: Fixed-point iteration
+tags: [root-finding, convergence, floats]
+
+statement: |
+  `fixed_point(g, x0, tol=1e-12, max_iter=200)` repeatedly replaces x with g(x)
+  until two successive values differ by less than `tol`, then returns the last
+  one.
+
+  `sqrt_by_fixed_point(a, tol=1e-12)` uses that to compute a square root via the
+  Babylonian map, replacing x with (x + a/x) / 2. Return 0.0 for a == 0 and
+  raise `ValueError` for negative input.
+
+misconceptions_applicable: [CONV, DIV, CMP, EDGE, OK, ALT]

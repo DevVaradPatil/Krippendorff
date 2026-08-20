@@ -1,0 +1,12 @@
+id: flatten_nested
+title: Flatten nested lists
+tags: [recursion, base-case, lists]
+
+statement: |
+  `flatten(nested)` returns a single flat list holding every non-list item of an
+  arbitrarily nested list, left to right.
+
+  `depth(nested)` returns the nesting depth: a non-list has depth 0, a flat list
+  has depth 1, and a list containing a list has depth 2.
+
+misconceptions_applicable: [REC, CMP, OK, ALT]

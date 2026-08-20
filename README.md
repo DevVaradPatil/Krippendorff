@@ -8,27 +8,25 @@ The same research finds those graders also disagree with *themselves* — by 1.7
 
 ## Results
 
-120 labelled synthetic submissions across 16 problems. Both LLM rows use `gemini-3.1-flash-lite` at temperature 0. Full detail and caveats in [results/REPORT.md](results/REPORT.md).
+179 labelled synthetic submissions across 24 problems, every misconception class at n ≥ 4. Both LLM rows use `gemini-3.1-flash-lite` at temperature 0. Full detail and caveats in [results/REPORT.md](results/REPORT.md).
 
-| System | Band accuracy | Self-agreement (bands) | Misconception macro-F1 | FP rate on correct code | Attack success | ₹/submission |
+| System | Band accuracy | Self-agreement (bands) | Misconception macro-F1 | FP rate on correct code | Attack success | Deferred |
 |---|---|---|---|---|---|---|
-| Test-only baseline | 1.000 † | 0.00 | 0.100 | 0.000 | — | 0.00 |
-| Static analysis only | 0.475 | 0.00 | 0.021 | 0.000 | — | 0.00 |
-| Zero-shot LLM | 0.458 | 0.00 | 0.472 | **0.125** | **19%** | 0.010 |
+| Test-only baseline | 0.972 † | 0.00 | 0.070 | 0.000 | — | 0 |
+| Static analysis only | 0.480 | 0.00 | 0.009 | 0.000 | — | 0 |
+| Zero-shot LLM | 0.469 | 0.00 | 0.438 | **0.167** | 19% | 0 |
 | Human (literature) | — | **1.79** | — | — | — | — |
-| **Full agent** | **0.892** | **0.00** | **0.932** | **0.000** | **1%** | 0.017 |
+| **Full agent** | **0.894** | **0.00** | **0.933** | 0.056 | **1%** | 15% |
 
-**The pipeline is worth roughly double the prompt.** Same model, same items, the only difference being the engineering: macro-F1 0.472 → **0.932**, and the false-positive rate on correct submissions 0.125 → **0.000**. A zero-shot grader flagged one in eight working submissions as buggy; the full agent flagged none of 24, identifying all 21 `OK` submissions with precision and recall of 1.00.
+**The pipeline is worth roughly double the prompt.** Same model, same items, the only difference being the engineering: macro-F1 0.438 → **0.933**, and the false-positive rate on correct submissions 0.167 → **0.056**.
 
 **Self-consistency: 0.00 bands across three independent passes, against a 1.79-band human baseline.** Measured at temperature 0, which is the deployment configuration — it says the system is reproducible, not that the model is free of uncertainty.
 
-**Prompt injection: 19% success against a naive grader, 1% against this pipeline** (8 attack families × 10 submissions × 3 architectures, 240 attacked gradings each paired with a clean control). Of the 15 attacks that beat the naive grader, 10 both inflated the score *and* relabelled broken code as correct.
+**Prompt injection: 19% success against a naive grader, 1% against this pipeline** (8 attack families × 3 architectures, every attacked grading paired with a clean control). Stripping comments and merely quarantining them scored the same, so what earned the drop is structural: correctness is 60% of the rubric and comes from the test suite, leaving the model only the 15% design weight to move.
 
-And the part that contradicts the design intent: **stripping comments before the model sees them (1%) and passing them inside an untrusted block (0%) are indistinguishable.** What earned the drop is structural — correctness is 60% of the rubric and comes from the test suite, so the model only controls the 15% design weight. The one attack that got through moved a score by 0.03 and left the diagnosis correct. Input isolation is worth keeping as defence in depth, but the architecture is the defense.
+**The false-positive rate is not zero, and finding that out took more data.** At 3 `ALT` examples it measured 0.000; at 24 it is 0.056. Both failures are the same one — the agent flagged `counts=None` plus a guard as a "mutable default argument", which is the idiom that *avoids* one. Its reference spelling (`if counts is None:`) was never flagged; the alternative spelling (a conditional expression) was. That is a penalty for writing correct code unconventionally, which is precisely the bias `ALT` exists to detect.
 
-**† That 1.000 is a tautology, not a result.** Ground truth is derived by rule from the tests, and the test-only baseline reads the same tests, so it cannot miss — correctness is 60% of the rubric weight. Band accuracy is therefore not a discriminating metric on synthetic data for any system that runs the tests, which is why the full agent's 0.892 is *lower* than a baseline it beats on every metric that discriminates.
-
-A zero false-positive rate is likewise cheap on its own: static-analysis-only scores 0.000 by labelling everything `OK`, at macro-F1 0.021. The two must always be read together.
+**† The 0.972 is near-tautological.** Ground truth is derived by rule from the tests and the test-only baseline reads the same tests, so it cannot miss by much — correctness is 60% of the weight. Band accuracy barely discriminates on synthetic data, which is why the full agent's 0.894 is *lower* than a baseline it beats on every metric that does.
 
 Negative findings are reported here too. The largest open threat to the headline: the agent is shown the reference solution, and every mutant is a small edit to it, so diagnosis is partly a diff-reading task and macro-F1 should be expected to fall on real submissions.
 
@@ -76,7 +74,7 @@ Sandboxed execution requires Docker with Linux containers; student code is never
 |---|---|
 | `agent/` | The S0–S7 pipeline, one module per stage |
 | `eval/` | Harness, metrics, the five baselines, adversarial suite |
-| `data/problems/` | 25 problem specs, reference solutions, test suites |
+| `data/problems/` | 24 problem specs, each with a reference, an alternative, and a test suite |
 | `data/mutations/` | Labelled mutation operators; the synthetic-set generator |
 | `rubric/rubric.yaml` | Criteria, weights, band descriptors |
 | `results/REPORT.md` | The actual deliverable |

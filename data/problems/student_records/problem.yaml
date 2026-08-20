@@ -1,0 +1,16 @@
+id: student_records
+title: Parse student records
+tags: [strings, type-conversion, file-io]
+
+statement: |
+  `parse_record(line)` splits a "name,score,attempts" string into a tuple of the
+  name, the score as a float, and the attempts as an int. Raise `ValueError` for
+  a line that does not hold exactly three comma-separated fields.
+
+  `load_records(lines)` parses many such lines, skipping blank ones.
+
+  `total_score(lines)` returns the sum of the scores, and
+  `average_attempts(lines)` the mean number of attempts, or 0.0 when there are
+  no records.
+
+misconceptions_applicable: [TYPE, LOOP, ACC, DIV, EDGE, CMP, OK, ALT]

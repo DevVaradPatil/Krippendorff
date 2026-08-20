@@ -10,9 +10,9 @@ The full specification lives in [GRADING_AGENT_PROJECT.md](GRADING_AGENT_PROJECT
 
 The project's claim is *measured consistency and calibrated deferral against a known human-inconsistency baseline* (Krippendorff's α = 0.22, 1.79-band self-disagreement), not "agreement with human grades." Any change that improves human agreement while worsening self-consistency or `OK`/`ALT` false-positive rate is a regression.
 
-Status: **C1–C4 measured, S0–S7 complete.** Full agent: macro-F1 **0.932**, false-positive rate on correct code **0.000**, self-disagreement **0.00 bands** vs the human 1.79, injection attack success **1%** vs 19% for a naive grader. Zero-shot on the same model and items: 0.472 macro-F1 and 0.125 FP — the pipeline is the difference. S7 ships feedback with 0/15 solution leaks. The cross-model frontier and the Menagerie human baseline are unmeasured.
+Status: **C1–C4 measured, S0–S7 complete.** Measured on 179 labelled submissions across 24 problems. Full agent: macro-F1 **0.933**, false-positive rate on correct code **0.056**, self-disagreement **0.00 bands** vs the human 1.79, injection attack success **1%** vs 19% for a naive grader. Zero-shot on the same model and items: 0.438 macro-F1 and 0.167 FP — the pipeline is the difference. S7 ships feedback with 0/15 solution leaks. The cross-model frontier and the Menagerie human baseline are unmeasured.
 
-Read [results/REPORT.md](results/REPORT.md) before trusting any number. Two things to carry into any change: the test-only band accuracy of 1.000 is a **tautology** (ground truth is rule-derived from the same tests the baseline reads, so band accuracy does not discriminate on synthetic data), and the agent is shown the reference solution while every mutant is a small edit to it — so diagnosis is partly diff-reading and 0.932 should be expected to fall on real submissions.
+Read [results/REPORT.md](results/REPORT.md) before trusting any number. Two things to carry into any change: the test-only band accuracy of 0.972 is near-**tautological** (ground truth is rule-derived from the same tests the baseline reads, so band accuracy barely discriminates on synthetic data), and the agent is shown the reference solution while every mutant is a small edit to it — so diagnosis is partly diff-reading and 0.933 should be expected to fall on real submissions.
 
 ## Commands
 
@@ -33,11 +33,13 @@ python -m eval.harness --n-runs 3            # the core loop; --limit N for a qu
 python -m eval.harness --preview             # print the exact S4 prompt, no model call
 python -m eval.harness --systems full_agent --model primary --limit 20
 python -m eval.baselines --baseline test_only
-python -m eval.adversarial --defenses on     # C4 suite: not implemented yet
+python -m eval.adversarial --n 10 --arms naive   # C4, one arm at a time
+python -m eval.feedback_run --n 15               # S7 leak rate
+python -m eval.figures                           # regenerate report figures
 ```
 
 `--model` selects a key under `models:` in [eval/configs/default.yaml](eval/configs/default.yaml);
-`primary` is Gemini Flash. Model names, prices and rate limits live there and
+`primary` is `gemini-3.1-flash-lite`. Model names, prices and rate limits live there and
 nowhere else — the cross-model frontier is a deliverable, so a model swap must
 never require a code change.
 
@@ -107,7 +109,7 @@ Rubric criteria, weights and band descriptors live in [rubric/rubric.yaml](rubri
 
 Two filters in [data/mutations/generate.py](data/mutations/generate.py) keep labels honest, and both must survive any refactor:
 
-- A mutant that **passes the whole suite is discarded as equivalent**, not labelled. 10 of 173 were dropped this way.
+- A mutant that **passes the whole suite is discarded as equivalent**, not labelled. 21 of 284 were dropped this way.
 - An `OK`/`ALT` variant that **fails any test is discarded**, because a supposedly-correct sample that is actually broken corrupts the false-positive rate.
 
 `tests/test_operators.py` asserts that every label a problem declares in `misconceptions_applicable` has an operator that actually matches it — a declared-but-unmatchable label silently under-fills that class.
@@ -116,7 +118,9 @@ Two filters in [data/mutations/generate.py](data/mutations/generate.py) keep lab
 
 Build the eval before the agent. Week 1's deliverable — a harness producing a test-only baseline number — is **done**; every later claim is measured relative to it. A change to the agent with no eval run attached is not finished work.
 
-Next: run the LLM systems. `.env` needs `GEMINI_API_KEY` from https://aistudio.google.com/apikey; nothing else blocks a measurement. The dataset is 120 submissions against the spec's target of 300; yield is ~10 per problem, so ~8 more problems closes it (use the `add-problem` skill).
+The dataset is 179 submissions against the spec's target of 300. Measured yield is **~6 buggy mutants per problem** after the equivalent-mutant filter and the OK/ALT subsample, so 300 needs roughly 40 problems, not the 24 there are now (use the `add-problem` skill).
+
+**The false-positive rate on correct code is the number most sensitive to dataset size.** It read 0.000 at 3 `ALT` examples and 0.056 at 24. Treat any FP figure computed on fewer than ~20 correct submissions as uninformative.
 
 `tests/test_pipeline.py` stubs the model and asserts the split holds in the real wiring: swinging the design sub-score from 1.0 to 0.0 moves the total by exactly 0.15, the design weight, and no more. If that assertion ever fails, the LLM has leaked into a criterion it does not own.
 
