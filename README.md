@@ -14,11 +14,11 @@ The same research finds those graders also disagree with *themselves* — by 1.7
 |---|---|---|---|---|---|---|
 | Test-only baseline | 0.972 † | 0.00 | 0.070 | 0.000 | — | 0 |
 | Static analysis only | 0.480 | 0.00 | 0.009 | 0.000 | — | 0 |
-| Zero-shot LLM | 0.469 | 0.00 | 0.438 | **0.167** | 19% | 0 |
+| Zero-shot LLM | 0.469 | 0.00 | 0.463 | **0.167** | 19% | 0 |
 | Human (literature) | — | **1.79** | — | — | — | — |
-| **Full agent** | **0.894** | **0.00** | **0.933** | 0.056 | **1%** | 15% |
+| **Full agent** | **0.899** | **0.00** | **0.933** | 0.056 | **1%** | 15% |
 
-**The pipeline is worth roughly double the prompt.** Same model, same items, the only difference being the engineering: macro-F1 0.438 → **0.933**, and the false-positive rate on correct submissions 0.167 → **0.056**.
+**The pipeline is worth roughly double the prompt.** Same model, same items, the only difference being the engineering: macro-F1 0.463 → **0.933**, and the false-positive rate on correct submissions 0.167 → **0.056**.
 
 **Self-consistency: 0.00 bands across three independent passes, against a 1.79-band human baseline.** Measured at temperature 0, which is the deployment configuration — it says the system is reproducible, not that the model is free of uncertainty.
 
@@ -26,7 +26,7 @@ The same research finds those graders also disagree with *themselves* — by 1.7
 
 **The false-positive rate is not zero, and finding that out took more data.** At 3 `ALT` examples it measured 0.000; at 24 it is 0.056. Both failures are the same one — the agent flagged `counts=None` plus a guard as a "mutable default argument", which is the idiom that *avoids* one. Its reference spelling (`if counts is None:`) was never flagged; the alternative spelling (a conditional expression) was. That is a penalty for writing correct code unconventionally, which is precisely the bias `ALT` exists to detect.
 
-**† The 0.972 is near-tautological.** Ground truth is derived by rule from the tests and the test-only baseline reads the same tests, so it cannot miss by much — correctness is 60% of the weight. Band accuracy barely discriminates on synthetic data, which is why the full agent's 0.894 is *lower* than a baseline it beats on every metric that does.
+**† The 0.972 is near-tautological.** Ground truth is derived by rule from the tests and the test-only baseline reads the same tests, so it cannot miss by much — correctness is 60% of the weight. Band accuracy barely discriminates on synthetic data, which is why the full agent's 0.899 is *lower* than a baseline it beats on every metric that does.
 
 Negative findings are reported here too. The largest open threat to the headline: the agent is shown the reference solution, and every mutant is a small edit to it, so diagnosis is partly a diff-reading task and macro-F1 should be expected to fall on real submissions.
 
@@ -68,6 +68,18 @@ python -m eval.harness --config eval/configs/default.yaml
 
 Sandboxed execution requires Docker with Linux containers; student code is never executed on the host.
 
+## Review console
+
+The routing layer defers what the agent is unsure of. The console is where a person resolves those cases:
+
+```bash
+pip install -e ".[ui]" && streamlit run app/review.py
+```
+
+It reads `results/runs.jsonl` and grades nothing itself. Each deferred submission shows the code with the cited evidence lines highlighted, the routing reason, and the score broken down by stage -- correctness from the test suite, style from ruff and radon, design from the model -- so the 15% the model actually controls is visible rather than asserted. Decisions append to `results/human_decisions.jsonl`, separate from the agent's own records.
+
+On the current run: **153 of 179 auto-graded, 26 deferred, 85% coverage.**
+
 ## Repository
 
 | Path | Contents |
@@ -77,6 +89,7 @@ Sandboxed execution requires Docker with Linux containers; student code is never
 | `data/problems/` | 24 problem specs, each with a reference, an alternative, and a test suite |
 | `data/mutations/` | Labelled mutation operators; the synthetic-set generator |
 | `rubric/rubric.yaml` | Criteria, weights, band descriptors |
+| `app/` | Streamlit review console over the human-review queue |
 | `results/REPORT.md` | The actual deliverable |
 
 Full specification, research framing and six-week plan: [GRADING_AGENT_PROJECT.md](GRADING_AGENT_PROJECT.md).

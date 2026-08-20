@@ -331,13 +331,37 @@ def _find_scp(tree: ast.Module, source: str) -> list[list[Edit]]:
             name = stmt.targets[0].id
             if not _is_accumulated(func, name):
                 continue
-            indent = " " * stmt.col_offset
             init = _seg(source, stmt)
             declaration = replace(source, stmt, f"global {name}")
-            module_level = Edit(0, 0, f"{init}\n")
+            # start == end: a pure insertion. An Edit whose end precedes its
+            # start re-emits everything between them, which duplicated the
+            # module docstring when this was Edit(offset, 0, ...).
+            at = _module_body_start(tree, source)
+            module_level = Edit(at, at, init + "\n")
             out.append([declaration, module_level])
-            del indent
     return out
+
+
+def _module_body_start(tree: ast.Module, source: str) -> int:
+    """Offset just after the module docstring, or 0 when there is none.
+
+    Inserting at offset 0 puts the global *above* the docstring, which demotes it
+    to an ordinary string expression and silently changes the documentation
+    sub-score. A student writing a global would put it below the docstring, and
+    a mutant should look like code someone might plausibly have written.
+    """
+    if not tree.body:
+        return 0
+    first = tree.body[0]
+    is_docstring = (
+        isinstance(first, ast.Expr)
+        and isinstance(first.value, ast.Constant)
+        and isinstance(first.value.value, str)
+    )
+    if not is_docstring:
+        return 0
+    starts = _line_starts(source)
+    return starts[first.end_lineno] if first.end_lineno < len(starts) else len(source)
 
 
 def _is_accumulated(func: ast.FunctionDef, name: str) -> bool:

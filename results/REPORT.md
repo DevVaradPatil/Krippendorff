@@ -49,15 +49,15 @@ All four run on the same 179 items, the two LLM systems on the same model.
 |---|---|---|---|---|---|---|---|---|
 | Test-only | 0.972 † | 0.028 | 0.012 | 0.070 | 0.000 | 1.000 | 0.313 | 0 |
 | Static-analysis only | 0.480 | 1.084 | 0.215 | 0.009 | 0.000 | 0.437 | 0.280 | 0 |
-| Zero-shot LLM | 0.469 | 0.777 | 0.144 | 0.438 | **0.167** | 0.540 | 0.507 | 0 |
-| **Full agent** | **0.894** | 0.106 | **0.020** | **0.933** | 0.056 | 0.889 | **0.105** | 26/179 |
+| Zero-shot LLM | 0.469 | 0.771 | 0.144 | 0.463 | **0.167** | 0.548 | 0.507 | 0 |
+| **Full agent** | **0.899** | 0.101 | **0.020** | **0.933** | 0.056 | 0.897 | **0.099** | 26/179 |
 | Human (Menagerie) | — | — | — | — | — | — | — | — |
 
 † Near-tautological — see §3. Human reference: 1.79 bands of self-disagreement,
 inter-rater α = 0.22 (Messer et al. 2025).
 
 **The pipeline is worth roughly double the prompt.** Same model, same items:
-macro-F1 goes 0.438 → **0.933**, and the false-positive rate on correct
+macro-F1 goes 0.463 → **0.933**, and the false-positive rate on correct
 submissions goes 0.167 → **0.056**. That is the project's central question
 answered — the sandbox, the evidence isolation, and the deterministic split
 account for the gap, because nothing else differs between those two rows.
@@ -139,7 +139,7 @@ false-positive rate 0.000, ECE 0.067, deferring 13.3%.
 
 ## 5. C2 — Diagnosis
 
-Macro-F1 **0.933** for the full agent, against 0.438 zero-shot, 0.070 test-only
+Macro-F1 **0.933** for the full agent, against 0.463 zero-shot, 0.070 test-only
 and 0.009 static-only. Per class, full agent, on 179 items:
 
 | Label | P | R | F1 | n | | Label | P | R | F1 | n |
@@ -197,7 +197,7 @@ way and worse, from 0.125 to **0.167** on the same expanded set.
 
 ## 6. C3 — Calibration
 
-Full agent: accuracy at 70% coverage **0.889**, ECE **0.105**, deferring 26 of
+Full agent: accuracy at 70% coverage **0.897**, ECE **0.099**, deferring 26 of
 179 (14.5%). Every deferral came from the band-edge rule; no submission was
 deferred for low confidence or, with a single sample, for disagreement.
 
@@ -445,7 +445,7 @@ models, so no rupee figure is quoted as a measurement.
 |---|---|---|
 | Full agent macro-F1 | 0.932 | **0.933** |
 | Full agent FP on correct code | 0.000 | **0.056** |
-| Zero-shot macro-F1 | 0.472 | 0.438 |
+| Zero-shot macro-F1 | 0.472 | 0.463 |
 | Zero-shot FP on correct code | 0.125 | **0.167** |
 | Test-only band accuracy | 1.000 | 0.972 |
 | Smallest class | 1 (`TYPE`) | 4 (`TYPE`) |

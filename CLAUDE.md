@@ -10,7 +10,7 @@ The full specification lives in [GRADING_AGENT_PROJECT.md](GRADING_AGENT_PROJECT
 
 The project's claim is *measured consistency and calibrated deferral against a known human-inconsistency baseline* (Krippendorff's α = 0.22, 1.79-band self-disagreement), not "agreement with human grades." Any change that improves human agreement while worsening self-consistency or `OK`/`ALT` false-positive rate is a regression.
 
-Status: **C1–C4 measured, S0–S7 complete.** Measured on 179 labelled submissions across 24 problems. Full agent: macro-F1 **0.933**, false-positive rate on correct code **0.056**, self-disagreement **0.00 bands** vs the human 1.79, injection attack success **1%** vs 19% for a naive grader. Zero-shot on the same model and items: 0.438 macro-F1 and 0.167 FP — the pipeline is the difference. S7 ships feedback with 0/15 solution leaks. The cross-model frontier and the Menagerie human baseline are unmeasured.
+Status: **C1–C4 measured, S0–S7 complete.** Measured on 179 labelled submissions across 24 problems. Full agent: macro-F1 **0.933**, false-positive rate on correct code **0.056**, self-disagreement **0.00 bands** vs the human 1.79, injection attack success **1%** vs 19% for a naive grader. Zero-shot on the same model and items: 0.463 macro-F1 and 0.167 FP — the pipeline is the difference. S7 ships feedback with 0/15 solution leaks. The cross-model frontier and the Menagerie human baseline are unmeasured.
 
 Read [results/REPORT.md](results/REPORT.md) before trusting any number. Two things to carry into any change: the test-only band accuracy of 0.972 is near-**tautological** (ground truth is rule-derived from the same tests the baseline reads, so band accuracy barely discriminates on synthetic data), and the agent is shown the reference solution while every mutant is a small edit to it — so diagnosis is partly diff-reading and 0.933 should be expected to fall on real submissions.
 
@@ -36,6 +36,7 @@ python -m eval.baselines --baseline test_only
 python -m eval.adversarial --n 10 --arms naive   # C4, one arm at a time
 python -m eval.feedback_run --n 15               # S7 leak rate
 python -m eval.figures                           # regenerate report figures
+streamlit run app/review.py                      # human-review console (needs [ui] extra)
 ```
 
 `--model` selects a key under `models:` in [eval/configs/default.yaml](eval/configs/default.yaml);
@@ -83,6 +84,8 @@ The pipeline is S0→S7 (diagram in spec §4). Each stage maps to one module:
 | S5 score aggregation | [agent/aggregate.py](agent/aggregate.py) | yes |
 | S6 confidence + routing | [agent/confidence.py](agent/confidence.py) | yes |
 | S7 feedback + leak detection | [agent/feedback.py](agent/feedback.py) | LLM, constrained |
+
+[app/](app/) is a read-only Streamlit console over `results/runs.jsonl`: it grades nothing, calls no model, and recomputes no score. Reviewer decisions append to `results/human_decisions.jsonl`, deliberately separate from the agent's records so recomputing metrics can never read a human's override as the agent's output. Its run selector keys on **(system, model)** for the same reason `eval/figures.py` does.
 
 S7 is opt-in (`write_feedback=True`): it costs a call per submission and never changes a grade, so the C1–C3 runs skip it. Measure it with `python -m eval.feedback_run --n 15`.
 
